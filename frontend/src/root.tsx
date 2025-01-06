@@ -28,6 +28,7 @@ export default component$(() => {
           />
         )}
         <RouterHead />
+        <script src="https://kit.fontawesome.com/4487f2379d.js" crossOrigin="anonymous"></script>
       </head>
       <body lang="en">
         <RouterOutlet />
