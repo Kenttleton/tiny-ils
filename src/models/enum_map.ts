@@ -1,1 +1,0 @@
-export type EnumMap<K,V> = {key: K; value: V}
