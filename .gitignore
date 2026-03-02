@@ -7,12 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
 dist
 dist-ssr
 *.local
+.svelte-kit
 
-# Editor directories and files
+# Go
+go.work.sum
+*/vendor/
+
+# Node identity keys (generated at runtime, never commit)
+*.key
+*.pub
+
+# Env secrets
+.env
+
+# Editor
 .vscode/*
 !.vscode/extensions.json
 .idea

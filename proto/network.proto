@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package network;
+
+option go_package = "tiny-ils/gen/networkpb;networkpb";
+
+// ─── Common ──────────────────────────────────────────────────────────────────
+
+message Empty {}
+
+// ─── Peers ───────────────────────────────────────────────────────────────────
+
+message PeerInfo {
+  string node_id      = 1; // Ed25519 public key fingerprint
+  string public_key   = 2; // base64-encoded Ed25519 public key
+  string address      = 3; // host:port of the peer's network-manager
+  string display_name = 4;
+}
+
+message PeerAck {
+  string node_id    = 1; // this node's ID
+  string public_key = 2; // this node's public key (for mutual exchange)
+}
+
+message PeerList {
+  repeated PeerInfo peers = 1;
+}
+
+// ─── Catalog federation ──────────────────────────────────────────────────────
+
+message CurioSummary {
+  string id         = 1;
+  string title      = 2;
+  string media_type = 3;
+  string format_type = 4;
+  repeated string tags = 5;
+  bool   available  = 6; // at least one physical copy available, or digital seats free
+  string node_id    = 7; // which node holds this curio
+  string node_name  = 8;
+}
+
+message CatalogSnapshot {
+  string node_id             = 1;
+  repeated CurioSummary curios = 2;
+  int64  snapshot_at         = 3;
+}
+
+message SyncAck {
+  int32 received = 1;
+}
+
+// ─── Cross-node search ───────────────────────────────────────────────────────
+
+message NetworkSearchRequest {
+  string query               = 1;
+  string media_type          = 2; // optional filter
+  bool   include_unavailable = 3;
+  string user_jwt            = 4; // JWT from home node; remote nodes may use for visibility rules
+}
+
+// Streamed: one message per responding peer.
+message NetworkSearchResult {
+  string node_id             = 1;
+  string node_name           = 2;
+  repeated CurioSummary curios = 3;
+  string error               = 4; // non-empty if this peer failed to respond
+}
+
+// ─── Cross-node borrowing ────────────────────────────────────────────────────
+
+message BorrowRequest {
+  string curio_id         = 1;
+  string copy_id          = 2;
+  string user_jwt         = 3; // JWT signed by the user's home node
+  string requesting_node  = 4;
+}
+
+message BorrowResponse {
+  string loan_id  = 1;
+  int64  due_date = 2; // unix seconds
+}
+
+message ReturnRequest {
+  string loan_id = 1;
+  string user_jwt = 2;
+}
+
+message ReturnResponse {
+  int64 returned_at = 1;
+}
+
+// ─── Cross-node physical transfers ───────────────────────────────────────────
+
+message RemoteTransferRequest {
+  string transfer_id   = 1;
+  string copy_id       = 2;
+  string transfer_type = 3; // ILL | RETURN | PERMANENT
+  string source_node   = 4;
+  string dest_node     = 5;
+  string initiated_by  = 6; // manager userId on requesting node
+  string user_jwt      = 7; // JWT signed by the requesting node
+  string notes         = 8;
+}
+
+message RemoteTransferAck {
+  string transfer_id = 1;
+  bool   accepted    = 2;
+}
+
+message TransferUpdate {
+  string transfer_id = 1;
+  string new_status  = 2; // APPROVED | IN_TRANSIT | RECEIVED | REJECTED | CANCELLED
+  string actor_id    = 3; // manager userId who triggered the update
+  string user_jwt    = 4; // JWT signed by the notifying node
+}
+
+// ─── Identity verification ───────────────────────────────────────────────────
+
+message UserToken {
+  string jwt = 1;
+}
+
+message VerificationResult {
+  bool   valid       = 1;
+  string user_id     = 2;
+  string home_node   = 3;
+  string role        = 4; // role on the verifying node, if any
+  string error       = 5;
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+service NetworkManager {
+  // Peer registry
+  rpc RegisterPeer(PeerInfo) returns (PeerAck);
+  rpc ListPeers(Empty) returns (PeerList);
+
+  // Cross-node catalog search (streaming — one result per responding peer)
+  rpc SearchNetwork(NetworkSearchRequest) returns (stream NetworkSearchResult);
+
+  // Catalog snapshot sync
+  rpc ShareCatalog(CatalogSnapshot) returns (SyncAck);
+
+  // Cross-node borrowing
+  rpc RequestBorrow(BorrowRequest) returns (BorrowResponse);
+  rpc ReturnCurio(ReturnRequest) returns (ReturnResponse);
+
+  // Identity verification (used by remote nodes to validate a foreign JWT)
+  rpc VerifyUser(UserToken) returns (VerificationResult);
+
+  // Cross-node physical transfers
+  rpc InitiateRemoteTransfer(RemoteTransferRequest) returns (RemoteTransferAck);
+  rpc NotifyTransferUpdate(TransferUpdate)           returns (Empty);
+}

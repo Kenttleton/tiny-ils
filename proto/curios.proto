@@ -1,0 +1,269 @@
+syntax = "proto3";
+
+package curios;
+
+option go_package = "tiny-ils/gen/curiospb;curiospb";
+
+// ─── Common types ───────────────────────────────────────────────────────────
+
+message Empty {}
+
+message CurioId {
+  string id = 1;
+}
+
+message HoldId {
+  string id = 1;
+}
+
+message LeaseId {
+  string id = 1;
+}
+
+message TransferId {
+  string id = 1;
+}
+
+// ─── Physical copy transfers ─────────────────────────────────────────────────
+
+message TransferRequest {
+  string copy_id       = 1;
+  string transfer_type = 2; // ILL | RETURN | PERMANENT
+  string source_node   = 3;
+  string dest_node     = 4;
+  string initiated_by  = 5; // manager userId
+  string notes         = 6;
+}
+
+message TransferAction {
+  string transfer_id = 1;
+  string actor_id    = 2; // manager userId
+  string notes       = 3;
+}
+
+message ListTransfersRequest {
+  string status        = 1; // optional filter
+  string node_id       = 2; // optional: only transfers involving this node
+  string transfer_type = 3; // optional filter
+}
+
+message CopyTransfer {
+  string id            = 1;
+  string copy_id       = 2;
+  string transfer_type = 3; // ILL | RETURN | PERMANENT
+  string source_node   = 4;
+  string dest_node     = 5;
+  string initiated_by  = 6; // manager userId
+  string approved_by   = 7; // manager userId who confirmed receipt
+  string status        = 8; // PENDING | APPROVED | IN_TRANSIT | RECEIVED | REJECTED | CANCELLED
+  string notes         = 9;
+  int64  requested_at  = 10;
+  int64  approved_at   = 11; // 0 if not yet approved
+  int64  shipped_at    = 12; // 0 if not yet shipped
+  int64  received_at   = 13; // 0 if not yet received
+}
+
+message TransferList {
+  repeated CopyTransfer transfers = 1;
+}
+
+// ─── Curio catalog ──────────────────────────────────────────────────────────
+
+message Curio {
+  string id          = 1;
+  string title       = 2;
+  string description = 3;
+  string media_type  = 4; // THING | BOOK | VIDEO | AUDIO | GAME
+  string format_type = 5; // DIGITAL | PHYSICAL | BOTH
+  repeated string tags = 6;
+  string barcode    = 7;
+  string qr_code    = 8;
+  int64  created_at = 9;  // unix seconds
+  int64  updated_at = 10;
+}
+
+message CurioList {
+  repeated Curio curios = 1;
+  int32 total = 2;
+}
+
+message ListCuriosRequest {
+  string query      = 1;
+  string media_type = 2;
+  string format_type = 3;
+  repeated string tags = 4;
+  int32 limit  = 5;
+  int32 offset = 6;
+}
+
+message CreateCurioRequest {
+  string title       = 1;
+  string description = 2;
+  string media_type  = 3;
+  string format_type = 4;
+  repeated string tags = 5;
+  string barcode     = 6;
+  string qr_code     = 7;
+}
+
+message UpdateCurioRequest {
+  string id          = 1;
+  string title       = 2;
+  string description = 3;
+  string format_type = 4;
+  repeated string tags = 5;
+  string barcode     = 6;
+  string qr_code     = 7;
+}
+
+// ─── Metadata enrichment ────────────────────────────────────────────────────
+
+message EnrichRequest {
+  string media_type  = 1; // must not be THING
+  string identifier  = 2; // ISBN, TMDB ID, MusicBrainz ID, etc.
+}
+
+message CurioMetadata {
+  string title       = 1;
+  string description = 2;
+  repeated string authors = 3;
+  string cover_url   = 4;
+  repeated string tags = 5;
+  string source      = 6; // which API provided the data
+}
+
+// ─── Physical copies ────────────────────────────────────────────────────────
+
+message PhysicalCopy {
+  string id        = 1;
+  string curio_id  = 2;
+  string condition = 3; // NEW | GOOD | FAIR | POOR | LOST
+  string location  = 4;
+  string node_id   = 5;
+  string status    = 6; // AVAILABLE | ON_LOAN | REQUESTED | IN_TRANSIT
+  int64  created_at = 7;
+}
+
+message CopyList {
+  repeated PhysicalCopy copies = 1;
+}
+
+message CheckoutRequest {
+  string copy_id      = 1;
+  string user_id      = 2;
+  string user_node_id = 3;
+  int64  due_date     = 4; // unix seconds; 0 = use node default loan period
+}
+
+message ReturnRequest {
+  string copy_id = 1;
+}
+
+message PhysicalLoan {
+  string id               = 1;
+  string copy_id          = 2;
+  string user_id          = 3;
+  string user_node_id     = 4;
+  int64  checked_out      = 5;
+  int64  due_date         = 6;
+  int64  returned_at      = 7; // 0 if not returned
+  string requesting_node  = 8;
+}
+
+// ─── Holds ───────────────────────────────────────────────────────────────────
+
+message HoldRequest {
+  string curio_id     = 1;
+  string user_id      = 2;
+  string user_node_id = 3;
+}
+
+message Hold {
+  string id        = 1;
+  string curio_id  = 2;
+  string user_id   = 3;
+  int64  placed_at = 4;
+  int64  expires_at = 5; // 0 if no expiry
+  bool   fulfilled = 6;
+}
+
+// ─── Digital assets & leases ─────────────────────────────────────────────────
+
+message DigitalAsset {
+  string id              = 1;
+  string curio_id        = 2;
+  string format          = 3; // EPUB, MP3, MP4, PDF, etc.
+  string file_ref        = 4; // original filename
+  string checksum        = 5;
+  int32  max_concurrent  = 6; // 0 = unlimited
+  string lcp_content_id  = 7; // Readium LCP content UUID (empty = no LCP)
+  string storage_backend = 8; // "local" | "provider"
+  bool   encrypted       = 9;
+}
+
+message CreateDigitalAssetRequest {
+  string curio_id        = 1;
+  string format          = 2;
+  string file_ref        = 3;
+  string checksum        = 4;
+  int32  max_concurrent  = 5;
+  string lcp_content_id  = 6;
+  string storage_backend = 7;
+  bool   encrypted       = 8;
+}
+
+message LeaseRequest {
+  string curio_id     = 1;
+  string user_id      = 2;
+  string user_node_id = 3;
+  int64  expires_at   = 4; // unix seconds; 0 = node default
+}
+
+message DigitalLease {
+  string id           = 1;
+  string asset_id     = 2;
+  string user_id      = 3;
+  string user_node_id = 4;
+  string access_token = 5; // LCP license ID (when LCP) or provider access URL
+  int64  issued_at    = 6;
+  int64  expires_at   = 7;
+  bool   revoked      = 8;
+  string license_url  = 9; // LSD status URL (when LCP); empty for provider leases
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+service CuriosManager {
+  // Catalog CRUD
+  rpc ListCurios(ListCuriosRequest) returns (CurioList);
+  rpc GetCurio(CurioId) returns (Curio);
+  rpc CreateCurio(CreateCurioRequest) returns (Curio);
+  rpc UpdateCurio(UpdateCurioRequest) returns (Curio);
+  rpc DeleteCurio(CurioId) returns (Empty);
+
+  // Metadata enrichment
+  rpc EnrichMetadata(EnrichRequest) returns (CurioMetadata);
+
+  // Physical copies and loans
+  rpc ListCopies(CurioId) returns (CopyList);
+  rpc CheckoutCopy(CheckoutRequest) returns (PhysicalLoan);
+  rpc ReturnCopy(ReturnRequest) returns (PhysicalLoan);
+  rpc PlaceHold(HoldRequest) returns (Hold);
+  rpc CancelHold(HoldId) returns (Empty);
+
+  // Digital assets and leasing
+  rpc GetDigitalAsset(CurioId) returns (DigitalAsset);
+  rpc CreateDigitalAsset(CreateDigitalAssetRequest) returns (DigitalAsset);
+  rpc IssueLease(LeaseRequest) returns (DigitalLease);
+  rpc RevokeLease(LeaseId) returns (Empty);
+
+  // Physical copy transfers
+  rpc RequestTransfer(TransferRequest)     returns (CopyTransfer);
+  rpc ApproveTransfer(TransferAction)      returns (CopyTransfer);
+  rpc RejectTransfer(TransferAction)       returns (CopyTransfer);
+  rpc MarkShipped(TransferAction)          returns (CopyTransfer);
+  rpc ConfirmReceived(TransferAction)      returns (CopyTransfer);
+  rpc CancelTransfer(TransferAction)       returns (CopyTransfer);
+  rpc ListTransfers(ListTransfersRequest)  returns (TransferList);
+  rpc GetTransfer(TransferId)              returns (CopyTransfer);
+}

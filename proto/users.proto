@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "tiny-ils/gen/userspb;userspb";
+
+// ─── Common ──────────────────────────────────────────────────────────────────
+
+message Empty {}
+
+message UserId {
+  string id = 1;
+}
+
+message NodeId {
+  string node_id = 1;
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+message User {
+  string id           = 1;
+  string email        = 2;
+  string display_name = 3;
+  string sso_provider = 4; // e.g. "google"; empty for password accounts
+  int64  created_at   = 5;
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+message RegisterRequest {
+  string email        = 1;
+  string password     = 2;
+  string display_name = 3;
+}
+
+message LoginRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+// Called by the BFF after completing an OAuth/OIDC flow.
+message SSOProfile {
+  string provider     = 1; // e.g. "google"
+  string subject      = 2; // provider's unique user ID
+  string email        = 3;
+  string display_name = 4;
+}
+
+message AuthResponse {
+  string token = 1; // node-signed JWT
+  User   user  = 2;
+}
+
+// ─── Claims ──────────────────────────────────────────────────────────────────
+
+message NodeClaim {
+  string user_id    = 1;
+  string node_id    = 2; // node public key fingerprint
+  string role       = 3; // USER | MANAGER
+  string granted_by = 4;
+  int64  granted_at = 5;
+}
+
+message ClaimList {
+  repeated NodeClaim claims = 1;
+}
+
+message ClaimRequest {
+  string user_id = 1;
+  string node_id = 2;
+  string role    = 3;
+}
+
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
+
+message BootstrapRequest {
+  string email        = 1;
+  string password     = 2;
+  string display_name = 3;
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+service UsersManager {
+  // Auth
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc UpsertSSOUser(SSOProfile) returns (AuthResponse);
+  rpc GetMe(UserId) returns (User);
+
+  // Node-scoped RBAC claims
+  rpc GrantClaim(ClaimRequest) returns (Empty);
+  rpc RevokeClaim(ClaimRequest) returns (Empty);
+  rpc ListClaims(NodeId) returns (ClaimList);
+
+  // First-run: creates the initial MANAGER if none exist
+  rpc BootstrapManager(BootstrapRequest) returns (AuthResponse);
+}

@@ -1,0 +1,10 @@
+go 1.25
+
+use (
+	./curios-manager
+	./gen
+	./network-manager
+	./shared
+	./tools/migrate
+	./users-manager
+)

@@ -1,0 +1,139 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tils
+      POSTGRES_USER: tils
+      POSTGRES_PASSWORD: tils
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tils -d tils"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  curios-manager:
+    build:
+      context: .
+      dockerfile: curios-manager/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres:5432/tils
+      GRPC_PORT: "50051"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      LCP_SERVER_URL: http://lcp-server:10000
+      LSD_SERVER_URL: http://lsd-server:10001
+      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-http://localhost:10001}
+      LCP_PROVIDER_URL: ${BFF_PUBLIC_URL:-http://localhost:3001}
+    volumes:
+      - node_identity:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      lcp-server:
+        condition: service_started
+      lsd-server:
+        condition: service_started
+
+  users-manager:
+    build:
+      context: .
+      dockerfile: users-manager/Dockerfile
+    ports:
+      - "50052:50052"
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres:5432/tils
+      GRPC_PORT: "50052"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      BOOTSTRAP_MANAGER_EMAIL: ${BOOTSTRAP_MANAGER_EMAIL:-}
+    volumes:
+      - node_identity:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  network-manager:
+    build:
+      context: .
+      dockerfile: network-manager/Dockerfile
+    ports:
+      - "50053:50053"
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres:5432/tils
+      GRPC_PORT: "50053"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      CURIOS_GRPC: curios-manager:50051
+    volumes:
+      - node_identity:/data
+    depends_on:
+      - curios-manager
+
+  lcp-server:
+    image: readium/lcp-server:latest
+    ports:
+      - "10000:10000"
+    environment:
+      LCPSERVER_DB_URL: postgres://tils:tils@postgres:5432/tils
+      LCPSERVER_STORAGE_PATH: /content
+      LCPSERVER_HOST: lcp-server
+      LCPSERVER_PORT: "10000"
+    volumes:
+      - lcp_content:/content
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  lsd-server:
+    image: readium/lsd-server:latest
+    ports:
+      - "10001:10001"
+    environment:
+      LSDSERVER_DB_URL: postgres://tils:tils@postgres:5432/tils
+      LSDSERVER_HOST: lsd-server
+      LSDSERVER_PORT: "10001"
+      LSDSERVER_PUBLIC_BASE_URL: ${LSD_PUBLIC_URL:-http://localhost:10001}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend-bff:
+    build: ./frontend-bff
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      CURIOS_GRPC: curios-manager:50051
+      USERS_GRPC: users-manager:50052
+      NETWORK_GRPC: network-manager:50053
+      SESSION_SECRET: ${SESSION_SECRET:-changeme-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      LCP_SERVER_URL: http://lcp-server:10000
+      LSD_SERVER_URL: http://lsd-server:10001
+      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-http://localhost:10001}
+      BFF_PUBLIC_URL: ${BFF_PUBLIC_URL:-http://localhost:3001}
+    depends_on:
+      - curios-manager
+      - users-manager
+      - network-manager
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      BFF_URL: http://frontend-bff:3001
+    depends_on:
+      - frontend-bff
+
+volumes:
+  pgdata:
+  node_identity:
+  lcp_content:
