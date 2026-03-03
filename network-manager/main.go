@@ -39,7 +39,7 @@ func main() {
 	defer pool.Close()
 
 	// Connect to local curios-manager for cross-node transfer delegation
-	curiosAddr := envOr("CURIOS_GRPC", "localhost:50051")
+	curiosAddr := envOr("CURIOS_GRPC", "localhost:50151")
 	curiosConn, err := grpc.NewClient(curiosAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("curios-manager client: %v", err)
@@ -50,7 +50,7 @@ func main() {
 	peerStore := store.NewPeerStore(pool)
 	svc := service.NewNetworkService(peerStore, nodeID, pubKey, privKey, curiosClient)
 
-	port := envOr("GRPC_PORT", "50053")
+	port := envOr("GRPC_PORT", "50153")
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatalf("listen: %v", err)

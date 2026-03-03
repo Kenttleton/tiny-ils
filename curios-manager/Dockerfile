@@ -1,11 +1,14 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /src
 
-# Copy workspace and module files first for layer caching
+# go work sync requires every module listed in go.work to have its go.mod present
 COPY go.work go.work.sum ./
 COPY shared/go.mod shared/go.sum ./shared/
 COPY gen/go.mod gen/go.sum ./gen/
 COPY curios-manager/go.mod curios-manager/go.sum ./curios-manager/
+COPY users-manager/go.mod users-manager/go.sum ./users-manager/
+COPY network-manager/go.mod network-manager/go.sum ./network-manager/
+COPY tools/migrate/go.mod tools/migrate/go.sum ./tools/migrate/
 
 RUN go work sync
 
@@ -19,5 +22,5 @@ RUN CGO_ENABLED=0 go build -o /curios-manager ./curios-manager
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /curios-manager /curios-manager
-EXPOSE 50051
+EXPOSE 50151
 ENTRYPOINT ["/curios-manager"]

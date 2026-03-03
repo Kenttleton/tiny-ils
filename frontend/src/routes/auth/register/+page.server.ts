@@ -1,8 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
-import { parseSetCookie } from '$lib/server/bff';
+import { getUsersClient, call, grpcMessage } from '$lib/server/grpc/clients';
+import { setAuthCookie } from '$lib/server/auth';
 import type { Actions, PageServerLoad } from './$types';
-
-const BFF = process.env.BFF_URL ?? 'http://localhost:3001';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) throw redirect(303, '/');
@@ -16,23 +15,17 @@ export const actions: Actions = {
 		const password = data.get('password')?.toString() ?? '';
 		const displayName = data.get('displayName')?.toString() || undefined;
 
-		const res = await fetch(`${BFF}/auth/register`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password, displayName })
-		});
-
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({ error: 'Registration failed' }));
-			return fail(400, { error: err.error ?? 'Registration failed', email, displayName });
+		try {
+			const res = await call<{ token: string }>(getUsersClient(), 'Register', {
+				email,
+				password,
+				display_name: displayName ?? ''
+			});
+			setAuthCookie(cookies, res.token);
+			throw redirect(303, '/');
+		} catch (err) {
+			if ((err as { status?: number }).status === 303) throw err;
+			return fail(400, { error: grpcMessage(err) || 'Registration failed', email, displayName });
 		}
-
-		const setCookie = res.headers.get('set-cookie');
-		if (setCookie) {
-			const { name, value, path, httpOnly, secure, sameSite, maxAge } = parseSetCookie(setCookie);
-			cookies.set(name, value, { path, httpOnly, secure, sameSite, maxAge });
-		}
-
-		throw redirect(303, '/');
 	}
 };

@@ -1,9 +1,37 @@
 import { redirect } from '@sveltejs/kit';
+import { Google, generateCodeVerifier, generateState } from 'arctic';
 import type { RequestHandler } from './$types';
 
-// PUBLIC_BFF_URL must be the browser-visible BFF address (e.g. http://localhost:3001)
-const BFF_PUBLIC = process.env.PUBLIC_BFF_URL ?? 'http://localhost:3001';
+function getGoogle() {
+	const clientId = process.env.GOOGLE_CLIENT_ID ?? '';
+	const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? '';
+	const redirectUri =
+		process.env.GOOGLE_REDIRECT_URI ?? 'http://localhost:3000/auth/callback/google';
+	return new Google(clientId, clientSecret, redirectUri);
+}
 
-export const GET: RequestHandler = async () => {
-	throw redirect(302, `${BFF_PUBLIC}/auth/google`);
+export const GET: RequestHandler = async ({ cookies }) => {
+	if (!process.env.GOOGLE_CLIENT_ID) {
+		throw redirect(303, '/auth/login');
+	}
+
+	const state = generateState();
+	const codeVerifier = generateCodeVerifier();
+	const google = getGoogle();
+	const url = google.createAuthorizationURL(state, codeVerifier, ['openid', 'email', 'profile']);
+
+	cookies.set('google_oauth_state', state, {
+		path: '/',
+		httpOnly: true,
+		maxAge: 60 * 10,
+		sameSite: 'lax'
+	});
+	cookies.set('google_code_verifier', codeVerifier, {
+		path: '/',
+		httpOnly: true,
+		maxAge: 60 * 10,
+		sameSite: 'lax'
+	});
+
+	throw redirect(302, url.toString());
 };

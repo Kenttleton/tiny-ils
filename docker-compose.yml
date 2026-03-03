@@ -20,35 +20,32 @@ services:
       context: .
       dockerfile: curios-manager/Dockerfile
     ports:
-      - "50051:50051"
+      - "50151:50151"
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
-      GRPC_PORT: "50051"
+      GRPC_PORT: "50151"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
-      LCP_SERVER_URL: http://lcp-server:10000
-      LSD_SERVER_URL: http://lsd-server:10001
-      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-http://localhost:10001}
-      LCP_PROVIDER_URL: ${BFF_PUBLIC_URL:-http://localhost:3001}
+      # LCP_SERVER_URL / LSD_SERVER_URL — set via .env when running with --profile lcp
+      LCP_SERVER_URL: ${LCP_SERVER_URL:-}
+      LSD_SERVER_URL: ${LSD_SERVER_URL:-}
+      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-}
+      LCP_PROVIDER_URL: ${BFF_PUBLIC_URL:-http://localhost:3000}
     volumes:
       - node_identity:/data
     depends_on:
       postgres:
         condition: service_healthy
-      lcp-server:
-        condition: service_started
-      lsd-server:
-        condition: service_started
 
   users-manager:
     build:
       context: .
       dockerfile: users-manager/Dockerfile
     ports:
-      - "50052:50052"
+      - "50152:50152"
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
-      GRPC_PORT: "50052"
+      GRPC_PORT: "50152"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
       BOOTSTRAP_MANAGER_EMAIL: ${BOOTSTRAP_MANAGER_EMAIL:-}
@@ -63,20 +60,26 @@ services:
       context: .
       dockerfile: network-manager/Dockerfile
     ports:
-      - "50053:50053"
+      - "50153:50153"
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
-      GRPC_PORT: "50053"
+      GRPC_PORT: "50153"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
-      CURIOS_GRPC: curios-manager:50051
+      CURIOS_GRPC: curios-manager:50151
     volumes:
       - node_identity:/data
     depends_on:
       - curios-manager
 
+  # ─── Readium LCP / LSD — opt-in: docker compose --profile lcp up ────────────
+  # The lcp-server image must be built from source:
+  #   https://github.com/readium/readium-lcp-server
+  # Set LCP_SERVER_URL=http://lcp-server:10000 etc. in your .env to wire it in.
+
   lcp-server:
-    image: readium/lcp-server:latest
+    image: ${LCP_SERVER_IMAGE:-readium/lcp-server:latest}
+    profiles: [lcp]
     ports:
       - "10000:10000"
     environment:
@@ -91,7 +94,8 @@ services:
         condition: service_healthy
 
   lsd-server:
-    image: readium/lsd-server:latest
+    image: ${LSD_SERVER_IMAGE:-readium/lsd-server:latest}
+    profiles: [lcp]
     ports:
       - "10001:10001"
     environment:
@@ -103,35 +107,27 @@ services:
       postgres:
         condition: service_healthy
 
-  frontend-bff:
-    build: ./frontend-bff
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
-      - "3001:3001"
+      - "3000:3000"
     environment:
-      PORT: "3001"
-      CURIOS_GRPC: curios-manager:50051
-      USERS_GRPC: users-manager:50052
-      NETWORK_GRPC: network-manager:50053
-      SESSION_SECRET: ${SESSION_SECRET:-changeme-in-production}
+      NODE_ID: ${NODE_ID:-}
+      CURIOS_GRPC: curios-manager:50151
+      USERS_GRPC: users-manager:50152
+      NETWORK_GRPC: network-manager:50153
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      LCP_SERVER_URL: http://lcp-server:10000
-      LSD_SERVER_URL: http://lsd-server:10001
-      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-http://localhost:10001}
-      BFF_PUBLIC_URL: ${BFF_PUBLIC_URL:-http://localhost:3001}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/auth/callback/google}
+      LCP_SERVER_URL: ${LCP_SERVER_URL:-}
+      LSD_SERVER_URL: ${LSD_SERVER_URL:-}
+      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-}
     depends_on:
       - curios-manager
       - users-manager
       - network-manager
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    environment:
-      BFF_URL: http://frontend-bff:3001
-    depends_on:
-      - frontend-bff
 
 volumes:
   pgdata:

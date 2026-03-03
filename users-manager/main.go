@@ -63,7 +63,7 @@ func main() {
 		}
 	}
 
-	port := envOr("GRPC_PORT", "50052")
+	port := envOr("GRPC_PORT", "50152")
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatalf("listen: %v", err)

@@ -1,14 +1,9 @@
-// Typed fetch wrappers for the BFF REST API.
-// All calls go through the BFF — never directly to Go gRPC services.
+// Typed fetch wrappers for the SvelteKit API routes.
+// All calls are same-origin relative paths — no separate BFF service.
 
-const BFF = typeof window !== 'undefined'
-  ? (import.meta.env.PUBLIC_BFF_URL ?? 'http://localhost:3001')
-  : (process.env.BFF_URL ?? 'http://localhost:3001');
-
-async function bff<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BFF}${path}`, {
+async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, {
     method,
-    credentials: 'include',
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -23,73 +18,67 @@ async function bff<T>(method: string, path: string, body?: unknown): Promise<T> 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const auth = {
-  me: () => bff<{ userId: string; claims: Claim[] }>('GET', '/auth/me'),
-  login: (email: string, password: string) =>
-    bff<{ user: User }>('POST', '/auth/login', { email, password }),
-  register: (email: string, password: string, displayName?: string) =>
-    bff<{ user: User }>('POST', '/auth/register', { email, password, displayName }),
-  logout: () => bff<void>('POST', '/auth/logout'),
-  googleLogin: () => { window.location.href = `${BFF}/auth/google`; },
+  googleLogin: () => { window.location.href = '/auth/google'; },
 };
 
 // ─── Curios ───────────────────────────────────────────────────────────────────
 
 export const curios = {
   list: (params?: { q?: string; mediaType?: string; limit?: number; offset?: number }) =>
-    bff<CurioList>('GET', '/curios?' + new URLSearchParams(params as Record<string, string> ?? {}).toString()),
-  get: (id: string) => bff<Curio>('GET', `/curios/${id}`),
-  create: (data: CreateCurioInput) => bff<Curio>('POST', '/curios', data),
-  update: (id: string, data: Partial<CreateCurioInput>) => bff<Curio>('PUT', `/curios/${id}`, data),
-  delete: (id: string) => bff<void>('DELETE', `/curios/${id}`),
+    api<CurioList>('GET', '/api/curios?' + new URLSearchParams((params ?? {}) as Record<string, string>).toString()),
+  get: (id: string) => api<Curio>('GET', `/api/curios/${id}`),
+  create: (data: CreateCurioInput) => api<Curio>('POST', '/api/curios', data),
+  update: (id: string, data: Partial<CreateCurioInput>) => api<Curio>('PUT', `/api/curios/${id}`, data),
+  delete: (id: string) => api<void>('DELETE', `/api/curios/${id}`),
   enrich: (mediaType: string, identifier: string) =>
-    bff<CurioMetadata>('POST', '/curios/enrich', { mediaType, identifier }),
-  listCopies: (id: string) => bff<CopyList>('GET', `/curios/${id}/copies`),
-  placeHold: (id: string) => bff<Hold>('POST', `/curios/${id}/hold`, {}),
+    api<CurioMetadata>('POST', '/api/curios/enrich', { mediaType, identifier }),
+  listCopies: (id: string) => api<CopyList>('GET', `/api/curios/${id}/copies`),
+  placeHold: (id: string) => api<Hold>('POST', `/api/curios/${id}/hold`, {}),
 };
 
 // ─── Loans ────────────────────────────────────────────────────────────────────
 
 export const loans = {
-  checkout: (copyId: string) => bff<PhysicalLoan>('POST', `/copies/${copyId}/checkout`, {}),
-  return: (copyId: string) => bff<PhysicalLoan>('POST', `/copies/${copyId}/return`, {}),
-  cancelHold: (holdId: string) => bff<void>('DELETE', `/holds/${holdId}`),
+  checkout: (copyId: string) => api<PhysicalLoan>('POST', `/api/copies/${copyId}/checkout`, {}),
+  return: (copyId: string) => api<PhysicalLoan>('POST', `/api/copies/${copyId}/return`, {}),
+  cancelHold: (holdId: string) => api<void>('DELETE', `/api/holds/${holdId}`),
 };
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export const search = {
   local: (q: string, mediaType?: string) =>
-    bff<CurioList>('GET', `/search/local?q=${encodeURIComponent(q)}&mediaType=${mediaType ?? ''}`),
+    api<CurioList>('GET', `/api/search/local?q=${encodeURIComponent(q)}&mediaType=${mediaType ?? ''}`),
   network: (q: string, mediaType?: string) =>
-    bff<{ results: NetworkSearchResult[] }>('GET', `/search/network?q=${encodeURIComponent(q)}&mediaType=${mediaType ?? ''}`),
+    api<{ results: NetworkSearchResult[] }>('GET', `/api/search/network?q=${encodeURIComponent(q)}&mediaType=${mediaType ?? ''}`),
 };
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
 export const peers = {
-  list: () => bff<PeerList>('GET', '/peers'),
+  list: () => api<PeerList>('GET', '/api/peers'),
   register: (data: { nodeId: string; publicKey: string; address: string; displayName?: string }) =>
-    bff<object>('POST', '/peers', data),
+    api<object>('POST', '/api/peers', data),
 };
 
 export const claims = {
-  list: () => bff<ClaimList>('GET', '/claims'),
+  list: () => api<ClaimList>('GET', '/api/claims'),
   grant: (userId: string, role: string, nodeId?: string) =>
-    bff<void>('POST', '/claims/grant', { userId, role, nodeId }),
+    api<void>('POST', '/api/claims/grant', { userId, role, nodeId }),
   revoke: (userId: string, nodeId?: string) =>
-    bff<void>('DELETE', '/claims/revoke', { userId, nodeId }),
+    api<void>('DELETE', '/api/claims/revoke', { userId, nodeId }),
 };
 
 export const transfers = {
   list: (params?: { status?: string; nodeId?: string; transferType?: string }) =>
-    bff<TransferList>('GET', '/transfers?' + new URLSearchParams((params ?? {}) as Record<string, string>).toString()),
-  get: (id: string) => bff<CopyTransfer>('GET', `/transfers/${id}`),
-  request: (data: RequestTransferInput) => bff<CopyTransfer>('POST', '/transfers', data),
-  approve: (id: string, notes?: string) => bff<CopyTransfer>('POST', `/transfers/${id}/approve`, { notes }),
-  reject: (id: string, notes?: string) => bff<CopyTransfer>('POST', `/transfers/${id}/reject`, { notes }),
-  ship: (id: string, notes?: string) => bff<CopyTransfer>('POST', `/transfers/${id}/ship`, { notes }),
-  receive: (id: string, notes?: string) => bff<CopyTransfer>('POST', `/transfers/${id}/receive`, { notes }),
-  cancel: (id: string, notes?: string) => bff<CopyTransfer>('POST', `/transfers/${id}/cancel`, { notes }),
+    api<TransferList>('GET', '/api/transfers?' + new URLSearchParams((params ?? {}) as Record<string, string>).toString()),
+  get: (id: string) => api<CopyTransfer>('GET', `/api/transfers/${id}`),
+  request: (data: RequestTransferInput) => api<CopyTransfer>('POST', '/api/transfers', data),
+  approve: (id: string, notes?: string) => api<CopyTransfer>('POST', `/api/transfers/${id}/approve`, { notes }),
+  reject: (id: string, notes?: string) => api<CopyTransfer>('POST', `/api/transfers/${id}/reject`, { notes }),
+  ship: (id: string, notes?: string) => api<CopyTransfer>('POST', `/api/transfers/${id}/ship`, { notes }),
+  receive: (id: string, notes?: string) => api<CopyTransfer>('POST', `/api/transfers/${id}/receive`, { notes }),
+  cancel: (id: string, notes?: string) => api<CopyTransfer>('POST', `/api/transfers/${id}/cancel`, { notes }),
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -1,12 +1,11 @@
 import { error, redirect, fail } from '@sveltejs/kit';
-import { serverFetch } from '$lib/server/bff';
+import { getCuriosClient, call, grpcMessage } from '$lib/server/grpc/clients';
 import type { Curio } from '$lib/api';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ request, params }) => {
-	const cookie = request.headers.get('cookie') ?? '';
+export const load: PageServerLoad = async ({ params }) => {
 	try {
-		const { data } = await serverFetch<Curio>('GET', `/curios/${params.id}`, cookie);
+		const data = await call<Curio>(getCuriosClient(), 'GetCurio', { id: params.id });
 		return { curio: data };
 	} catch {
 		throw error(404, 'Curio not found');
@@ -15,13 +14,12 @@ export const load: PageServerLoad = async ({ request, params }) => {
 
 export const actions: Actions = {
 	update: async ({ request, params }) => {
-		const cookie = request.headers.get('cookie') ?? '';
 		const form = await request.formData();
 		const body = {
+			id: params.id,
 			title: form.get('title')?.toString() ?? '',
 			description: form.get('description')?.toString() || undefined,
-			mediaType: form.get('mediaType')?.toString() ?? 'THING',
-			formatType: form.get('formatType')?.toString() ?? 'PHYSICAL',
+			format_type: form.get('formatType')?.toString() ?? 'PHYSICAL',
 			tags: form
 				.get('tags')
 				?.toString()
@@ -32,11 +30,11 @@ export const actions: Actions = {
 		};
 		if (!body.title) return fail(400, { error: 'Title is required' });
 		try {
-			await serverFetch<Curio>('PUT', `/curios/${params.id}`, cookie, body);
+			await call<Curio>(getCuriosClient(), 'UpdateCurio', body);
 			throw redirect(303, '/admin/curios');
 		} catch (err) {
 			if ((err as { status?: number }).status === 303) throw err;
-			return fail(400, { error: String(err) });
+			return fail(400, { error: grpcMessage(err) });
 		}
 	}
 };

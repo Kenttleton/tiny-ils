@@ -8,6 +8,10 @@ dev:
 dev-bg:
     docker compose up --build -d
 
+# Start all services including Readium LCP/LSD (requires LCP images — see .env.lcp.example)
+dev-lcp:
+    docker compose --profile lcp up --build
+
 # Stop all services
 down:
     docker compose down
