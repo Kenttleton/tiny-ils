@@ -38,6 +38,10 @@
 	<hr />
 
 	<a href="/auth/google" class="sso-btn">Sign in with Google</a>
+
+	<p class="cross-node">
+		Account at another library? <a href="/auth/cross-node">Partner library sign-in</a>
+	</p>
 </div>
 
 <style>
@@ -105,5 +109,11 @@
 	}
 	.sso-btn:hover {
 		background: #f9fafb;
+	}
+	.cross-node {
+		font-size: 0.8125rem;
+		color: #6b7280;
+		margin: 0.75rem 0 0;
+		text-align: center;
 	}
 </style>

@@ -98,7 +98,7 @@ export interface CopyList { copies: PhysicalCopy[]; }
 export interface PhysicalLoan { id: string; copyId: string; userId: string; checkedOut: number; dueDate: number; returnedAt?: number; }
 export interface Hold { id: string; curioId: string; userId: string; placedAt: number; }
 export interface NetworkSearchResult { nodeId: string; nodeName: string; curios: Curio[]; error?: string; }
-export interface PeerList { peers: { nodeId: string; publicKey: string; address: string; displayName: string }[]; }
+export interface PeerList { peers: { nodeId: string; publicKey: string; address: string; displayName: string; status: string; capabilities: string[] }[]; }
 export interface ClaimList { claims: { userId: string; nodeId: string; role: string; }[]; }
 export interface CopyTransfer {
   id: string; copyId: string; transferType: string;

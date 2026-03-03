@@ -34,7 +34,6 @@ func main() {
 		log.Fatalf("node keypair: %v", err)
 	}
 	nodeID := identity.Fingerprint(pubKey)
-	log.Printf("node identity: %s", nodeID)
 
 	pool, err := db.Connect(ctx)
 	if err != nil {
@@ -44,24 +43,8 @@ func main() {
 
 	userStore := store.NewUserStore(pool)
 	claimsStore := store.NewClaimsStore(pool)
-	svc := service.NewUsersService(userStore, claimsStore, nodeID, privKey)
-
-	// Bootstrap first manager from env if no managers exist
-	if email := os.Getenv("BOOTSTRAP_MANAGER_EMAIL"); email != "" {
-		if hasManager, _ := userStore.HasAnyManager(ctx, nodeID); !hasManager {
-			log.Printf("bootstrapping first manager: %s", email)
-			_, err := svc.BootstrapManager(ctx, &pb.BootstrapRequest{
-				Email:       email,
-				DisplayName: "Admin",
-				Password:    envOr("BOOTSTRAP_MANAGER_PASSWORD", "changeme"),
-			})
-			if err != nil {
-				log.Printf("bootstrap warning: %v", err)
-			} else {
-				log.Printf("bootstrap complete — manager created: %s", email)
-			}
-		}
-	}
+	settingsStore := store.NewSettingsStore(pool)
+	svc := service.NewUsersService(userStore, claimsStore, settingsStore, nodeID, privKey)
 
 	port := envOr("GRPC_PORT", "50152")
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))

@@ -22,8 +22,11 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		throw redirect(303, '/auth/login');
 	}
 
+	const linkUserId = cookies.get('google_link_user_id') ?? null;
+
 	cookies.delete('google_oauth_state', { path: '/' });
 	cookies.delete('google_code_verifier', { path: '/' });
+	cookies.delete('google_link_user_id', { path: '/' });
 
 	try {
 		const google = getGoogle();
@@ -34,6 +37,17 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			headers: { Authorization: `Bearer ${accessToken}` }
 		}).then((r) => r.json() as Promise<{ sub: string; email: string; name: string }>);
 
+		if (linkUserId) {
+			// Link flow: associate this Google identity with the existing logged-in account
+			await call(getUsersClient(), 'LinkSSO', {
+				user_id: linkUserId,
+				provider: 'google',
+				subject: userinfo.sub
+			});
+			throw redirect(303, '/profile/settings?linked=google');
+		}
+
+		// Normal login / sign-up flow
 		const res = await call<{ token: string }>(getUsersClient(), 'UpsertSSOUser', {
 			provider: 'google',
 			subject: userinfo.sub,
@@ -46,6 +60,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	} catch (err) {
 		if ((err as { status?: number }).status === 303) throw err;
 		console.error('Google OAuth callback error:', grpcMessage(err));
+		// Surface link errors back to settings page rather than dropping to login
+		if (linkUserId) throw redirect(303, '/profile/settings?link_error=1');
 		throw redirect(303, '/auth/login');
 	}
 };

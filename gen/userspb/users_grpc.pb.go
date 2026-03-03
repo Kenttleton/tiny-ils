@@ -19,14 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UsersManager_Register_FullMethodName         = "/users.UsersManager/Register"
-	UsersManager_Login_FullMethodName            = "/users.UsersManager/Login"
-	UsersManager_UpsertSSOUser_FullMethodName    = "/users.UsersManager/UpsertSSOUser"
-	UsersManager_GetMe_FullMethodName            = "/users.UsersManager/GetMe"
-	UsersManager_GrantClaim_FullMethodName       = "/users.UsersManager/GrantClaim"
-	UsersManager_RevokeClaim_FullMethodName      = "/users.UsersManager/RevokeClaim"
-	UsersManager_ListClaims_FullMethodName       = "/users.UsersManager/ListClaims"
-	UsersManager_BootstrapManager_FullMethodName = "/users.UsersManager/BootstrapManager"
+	UsersManager_Register_FullMethodName            = "/users.UsersManager/Register"
+	UsersManager_Login_FullMethodName               = "/users.UsersManager/Login"
+	UsersManager_UpsertSSOUser_FullMethodName       = "/users.UsersManager/UpsertSSOUser"
+	UsersManager_LinkSSO_FullMethodName             = "/users.UsersManager/LinkSSO"
+	UsersManager_GetMe_FullMethodName               = "/users.UsersManager/GetMe"
+	UsersManager_UpdateUser_FullMethodName          = "/users.UsersManager/UpdateUser"
+	UsersManager_GrantClaim_FullMethodName          = "/users.UsersManager/GrantClaim"
+	UsersManager_RevokeClaim_FullMethodName         = "/users.UsersManager/RevokeClaim"
+	UsersManager_ListClaims_FullMethodName          = "/users.UsersManager/ListClaims"
+	UsersManager_ListUsers_FullMethodName           = "/users.UsersManager/ListUsers"
+	UsersManager_DeleteUser_FullMethodName          = "/users.UsersManager/DeleteUser"
+	UsersManager_BootstrapManager_FullMethodName    = "/users.UsersManager/BootstrapManager"
+	UsersManager_HasSetup_FullMethodName            = "/users.UsersManager/HasSetup"
+	UsersManager_GetNodeID_FullMethodName           = "/users.UsersManager/GetNodeID"
+	UsersManager_GetAppConfig_FullMethodName        = "/users.UsersManager/GetAppConfig"
+	UsersManager_UpdateAppConfig_FullMethodName     = "/users.UsersManager/UpdateAppConfig"
+	UsersManager_IssueCrossNodeToken_FullMethodName = "/users.UsersManager/IssueCrossNodeToken"
+	UsersManager_UpsertGuestUser_FullMethodName     = "/users.UsersManager/UpsertGuestUser"
 )
 
 // UsersManagerClient is the client API for UsersManager service.
@@ -37,13 +47,25 @@ type UsersManagerClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	UpsertSSOUser(ctx context.Context, in *SSOProfile, opts ...grpc.CallOption) (*AuthResponse, error)
+	LinkSSO(ctx context.Context, in *LinkSSORequest, opts ...grpc.CallOption) (*User, error)
 	GetMe(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*User, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
 	// Node-scoped RBAC claims
 	GrantClaim(ctx context.Context, in *ClaimRequest, opts ...grpc.CallOption) (*Empty, error)
 	RevokeClaim(ctx context.Context, in *ClaimRequest, opts ...grpc.CallOption) (*Empty, error)
 	ListClaims(ctx context.Context, in *NodeId, opts ...grpc.CallOption) (*ClaimList, error)
-	// First-run: creates the initial MANAGER if none exist
+	// Admin user management
+	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*UserList, error)
+	DeleteUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Empty, error)
+	// First-run setup
 	BootstrapManager(ctx context.Context, in *BootstrapRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	HasSetup(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*SetupStatus, error)
+	GetNodeID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NodeId, error)
+	GetAppConfig(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AppConfig, error)
+	UpdateAppConfig(ctx context.Context, in *AppConfig, opts ...grpc.CallOption) (*Empty, error)
+	// Cross-node identity
+	IssueCrossNodeToken(ctx context.Context, in *CrossNodeTokenRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	UpsertGuestUser(ctx context.Context, in *UpsertGuestUserRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type usersManagerClient struct {
@@ -84,10 +106,30 @@ func (c *usersManagerClient) UpsertSSOUser(ctx context.Context, in *SSOProfile, 
 	return out, nil
 }
 
+func (c *usersManagerClient) LinkSSO(ctx context.Context, in *LinkSSORequest, opts ...grpc.CallOption) (*User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, UsersManager_LinkSSO_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersManagerClient) GetMe(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(User)
 	err := c.cc.Invoke(ctx, UsersManager_GetMe_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, UsersManager_UpdateUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +166,90 @@ func (c *usersManagerClient) ListClaims(ctx context.Context, in *NodeId, opts ..
 	return out, nil
 }
 
+func (c *usersManagerClient) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*UserList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserList)
+	err := c.cc.Invoke(ctx, UsersManager_ListUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) DeleteUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, UsersManager_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersManagerClient) BootstrapManager(ctx context.Context, in *BootstrapRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthResponse)
 	err := c.cc.Invoke(ctx, UsersManager_BootstrapManager_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) HasSetup(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*SetupStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetupStatus)
+	err := c.cc.Invoke(ctx, UsersManager_HasSetup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) GetNodeID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NodeId, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NodeId)
+	err := c.cc.Invoke(ctx, UsersManager_GetNodeID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) GetAppConfig(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AppConfig, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppConfig)
+	err := c.cc.Invoke(ctx, UsersManager_GetAppConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) UpdateAppConfig(ctx context.Context, in *AppConfig, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, UsersManager_UpdateAppConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) IssueCrossNodeToken(ctx context.Context, in *CrossNodeTokenRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, UsersManager_IssueCrossNodeToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersManagerClient) UpsertGuestUser(ctx context.Context, in *UpsertGuestUserRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, UsersManager_UpsertGuestUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +264,25 @@ type UsersManagerServer interface {
 	Register(context.Context, *RegisterRequest) (*AuthResponse, error)
 	Login(context.Context, *LoginRequest) (*AuthResponse, error)
 	UpsertSSOUser(context.Context, *SSOProfile) (*AuthResponse, error)
+	LinkSSO(context.Context, *LinkSSORequest) (*User, error)
 	GetMe(context.Context, *UserId) (*User, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
 	// Node-scoped RBAC claims
 	GrantClaim(context.Context, *ClaimRequest) (*Empty, error)
 	RevokeClaim(context.Context, *ClaimRequest) (*Empty, error)
 	ListClaims(context.Context, *NodeId) (*ClaimList, error)
-	// First-run: creates the initial MANAGER if none exist
+	// Admin user management
+	ListUsers(context.Context, *ListUsersRequest) (*UserList, error)
+	DeleteUser(context.Context, *UserId) (*Empty, error)
+	// First-run setup
 	BootstrapManager(context.Context, *BootstrapRequest) (*AuthResponse, error)
+	HasSetup(context.Context, *Empty) (*SetupStatus, error)
+	GetNodeID(context.Context, *Empty) (*NodeId, error)
+	GetAppConfig(context.Context, *Empty) (*AppConfig, error)
+	UpdateAppConfig(context.Context, *AppConfig) (*Empty, error)
+	// Cross-node identity
+	IssueCrossNodeToken(context.Context, *CrossNodeTokenRequest) (*AuthResponse, error)
+	UpsertGuestUser(context.Context, *UpsertGuestUserRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedUsersManagerServer()
 }
 
@@ -168,8 +302,14 @@ func (UnimplementedUsersManagerServer) Login(context.Context, *LoginRequest) (*A
 func (UnimplementedUsersManagerServer) UpsertSSOUser(context.Context, *SSOProfile) (*AuthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertSSOUser not implemented")
 }
+func (UnimplementedUsersManagerServer) LinkSSO(context.Context, *LinkSSORequest) (*User, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkSSO not implemented")
+}
 func (UnimplementedUsersManagerServer) GetMe(context.Context, *UserId) (*User, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMe not implemented")
+}
+func (UnimplementedUsersManagerServer) UpdateUser(context.Context, *UpdateUserRequest) (*User, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedUsersManagerServer) GrantClaim(context.Context, *ClaimRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method GrantClaim not implemented")
@@ -180,8 +320,32 @@ func (UnimplementedUsersManagerServer) RevokeClaim(context.Context, *ClaimReques
 func (UnimplementedUsersManagerServer) ListClaims(context.Context, *NodeId) (*ClaimList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListClaims not implemented")
 }
+func (UnimplementedUsersManagerServer) ListUsers(context.Context, *ListUsersRequest) (*UserList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (UnimplementedUsersManagerServer) DeleteUser(context.Context, *UserId) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
+}
 func (UnimplementedUsersManagerServer) BootstrapManager(context.Context, *BootstrapRequest) (*AuthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BootstrapManager not implemented")
+}
+func (UnimplementedUsersManagerServer) HasSetup(context.Context, *Empty) (*SetupStatus, error) {
+	return nil, status.Error(codes.Unimplemented, "method HasSetup not implemented")
+}
+func (UnimplementedUsersManagerServer) GetNodeID(context.Context, *Empty) (*NodeId, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNodeID not implemented")
+}
+func (UnimplementedUsersManagerServer) GetAppConfig(context.Context, *Empty) (*AppConfig, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAppConfig not implemented")
+}
+func (UnimplementedUsersManagerServer) UpdateAppConfig(context.Context, *AppConfig) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAppConfig not implemented")
+}
+func (UnimplementedUsersManagerServer) IssueCrossNodeToken(context.Context, *CrossNodeTokenRequest) (*AuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IssueCrossNodeToken not implemented")
+}
+func (UnimplementedUsersManagerServer) UpsertGuestUser(context.Context, *UpsertGuestUserRequest) (*AuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpsertGuestUser not implemented")
 }
 func (UnimplementedUsersManagerServer) mustEmbedUnimplementedUsersManagerServer() {}
 func (UnimplementedUsersManagerServer) testEmbeddedByValue()                      {}
@@ -258,6 +422,24 @@ func _UsersManager_UpsertSSOUser_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersManager_LinkSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkSSORequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).LinkSSO(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_LinkSSO_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).LinkSSO(ctx, req.(*LinkSSORequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersManager_GetMe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserId)
 	if err := dec(in); err != nil {
@@ -272,6 +454,24 @@ func _UsersManager_GetMe_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersManagerServer).GetMe(ctx, req.(*UserId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_UpdateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -330,6 +530,42 @@ func _UsersManager_ListClaims_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersManager_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).ListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_ListUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).ListUsers(ctx, req.(*ListUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_DeleteUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).DeleteUser(ctx, req.(*UserId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersManager_BootstrapManager_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BootstrapRequest)
 	if err := dec(in); err != nil {
@@ -344,6 +580,114 @@ func _UsersManager_BootstrapManager_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersManagerServer).BootstrapManager(ctx, req.(*BootstrapRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_HasSetup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).HasSetup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_HasSetup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).HasSetup(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_GetNodeID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).GetNodeID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_GetNodeID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).GetNodeID(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_GetAppConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).GetAppConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_GetAppConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).GetAppConfig(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_UpdateAppConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppConfig)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).UpdateAppConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_UpdateAppConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).UpdateAppConfig(ctx, req.(*AppConfig))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_IssueCrossNodeToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CrossNodeTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).IssueCrossNodeToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_IssueCrossNodeToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).IssueCrossNodeToken(ctx, req.(*CrossNodeTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersManager_UpsertGuestUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertGuestUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersManagerServer).UpsertGuestUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersManager_UpsertGuestUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersManagerServer).UpsertGuestUser(ctx, req.(*UpsertGuestUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -368,8 +712,16 @@ var UsersManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UsersManager_UpsertSSOUser_Handler,
 		},
 		{
+			MethodName: "LinkSSO",
+			Handler:    _UsersManager_LinkSSO_Handler,
+		},
+		{
 			MethodName: "GetMe",
 			Handler:    _UsersManager_GetMe_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _UsersManager_UpdateUser_Handler,
 		},
 		{
 			MethodName: "GrantClaim",
@@ -384,8 +736,40 @@ var UsersManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UsersManager_ListClaims_Handler,
 		},
 		{
+			MethodName: "ListUsers",
+			Handler:    _UsersManager_ListUsers_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _UsersManager_DeleteUser_Handler,
+		},
+		{
 			MethodName: "BootstrapManager",
 			Handler:    _UsersManager_BootstrapManager_Handler,
+		},
+		{
+			MethodName: "HasSetup",
+			Handler:    _UsersManager_HasSetup_Handler,
+		},
+		{
+			MethodName: "GetNodeID",
+			Handler:    _UsersManager_GetNodeID_Handler,
+		},
+		{
+			MethodName: "GetAppConfig",
+			Handler:    _UsersManager_GetAppConfig_Handler,
+		},
+		{
+			MethodName: "UpdateAppConfig",
+			Handler:    _UsersManager_UpdateAppConfig_Handler,
+		},
+		{
+			MethodName: "IssueCrossNodeToken",
+			Handler:    _UsersManager_IssueCrossNodeToken_Handler,
+		},
+		{
+			MethodName: "UpsertGuestUser",
+			Handler:    _UsersManager_UpsertGuestUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

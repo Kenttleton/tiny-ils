@@ -15,7 +15,37 @@
 		<span class="num">{data.total}</span>
 		<span class="label">Curios in catalog</span>
 	</div>
+	<div class="stat">
+		<span class="num">{data.peers.length}</span>
+		<span class="label">Partner libraries</span>
+	</div>
 </div>
+
+<section>
+	<h2>Network <a href="/admin/peers" class="section-link">Manage →</a></h2>
+	{#if data.peers.length === 0}
+		<p class="empty">No peer nodes connected. <a href="/admin/peers">Register one</a>.</p>
+	{:else}
+		<table>
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Address</th>
+					<th>Library ID</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each data.peers as peer}
+					<tr>
+						<td>{peer.displayName || '—'}</td>
+						<td class="mono">{peer.address}</td>
+						<td class="mono">{peer.nodeId}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	{/if}
+</section>
 
 <section>
 	<h2>Recent curios</h2>
@@ -59,12 +89,22 @@
 	}
 	.num { font-size: 2rem; font-weight: 700; }
 	.label { font-size: 0.75rem; color: #6b7280; }
-	h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+	section { margin-bottom: 2rem; }
+	h2 {
+		font-size: 1rem;
+		margin: 0 0 0.75rem;
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+	}
+	.section-link { font-size: 0.8rem; font-weight: 400; color: #6b7280; text-decoration: none; }
+	.section-link:hover { color: #111; text-decoration: underline; }
 	table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 	th { text-align: left; padding: 0.5rem; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-weight: 500; }
 	td { padding: 0.5rem; border-bottom: 1px solid #f3f4f6; }
 	td a { color: #374151; text-decoration: none; }
 	td a:hover { color: #111; text-decoration: underline; }
-	.empty { color: #6b7280; }
+	.mono { font-family: monospace; font-size: 0.8rem; word-break: break-all; }
+	.empty { color: #6b7280; font-size: 0.875rem; }
 	.more { margin-top: 0.75rem; font-size: 0.875rem; }
 </style>

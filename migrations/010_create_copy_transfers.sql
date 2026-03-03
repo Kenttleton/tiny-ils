@@ -1,24 +1,3 @@
--- Migration 010: replace available boolean with status enum on physical_copies,
--- and introduce the copy_transfers audit table.
-
--- ─── Step 1: alter physical_copies ───────────────────────────────────────────
-
-ALTER TABLE physical_copies
-  ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'AVAILABLE';
-
-UPDATE physical_copies
-  SET status = CASE WHEN available THEN 'AVAILABLE' ELSE 'ON_LOAN' END;
-
-ALTER TABLE physical_copies DROP COLUMN available;
-
-DROP INDEX IF EXISTS copies_available_idx;
-
-CREATE INDEX IF NOT EXISTS physical_copies_status ON physical_copies(status);
-
--- status values: AVAILABLE | ON_LOAN | REQUESTED | IN_TRANSIT
-
--- ─── Step 2: copy_transfers audit table ──────────────────────────────────────
-
 CREATE TABLE IF NOT EXISTS copy_transfers (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   copy_id         UUID NOT NULL REFERENCES physical_copies(id) ON DELETE RESTRICT,

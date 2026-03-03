@@ -19,8 +19,9 @@ func Fingerprint(pub ed25519.PublicKey) string {
 
 type NodeClaims struct {
 	jwt.RegisteredClaims
-	UserID string            `json:"uid"`
-	Claims []models.JWTClaim `json:"claims"`
+	UserID   string            `json:"uid"`
+	Claims   []models.JWTClaim `json:"claims"`
+	HomeNode string            `json:"home_node,omitempty"` // set for cross-node users; empty for local users
 }
 
 // IssueToken signs a JWT for the given user using the node's private key.
@@ -35,6 +36,46 @@ func IssueToken(userID, nodeFingerprint string, claims []models.JWTClaim, priv e
 		},
 		UserID: userID,
 		Claims: claims,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, c)
+	return token.SignedString(priv)
+}
+
+// IssueTokenWithHomeNode signs a local session JWT that carries home_node metadata.
+// Used when a cross-node user is granted a local session on a visiting node:
+// the JWT is issued by the visiting node but records the user's actual home node.
+func IssueTokenWithHomeNode(userID, nodeFingerprint, homeNode string, claims []models.JWTClaim, priv ed25519.PrivateKey, ttl time.Duration) (string, error) {
+	now := time.Now()
+	c := NodeClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			Issuer:    nodeFingerprint,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+		},
+		UserID:   userID,
+		Claims:   claims,
+		HomeNode: homeNode,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, c)
+	return token.SignedString(priv)
+}
+
+// IssueTokenForAudience signs a short-lived, audience-scoped JWT for cross-node use.
+// The token is signed by the home node (iss = nodeFingerprint) and is only valid
+// for consumption by audienceNode. No role claims are included — the receiving node
+// determines the user's role from its own node_claims table.
+func IssueTokenForAudience(userID, nodeFingerprint, audienceNode string, priv ed25519.PrivateKey, ttl time.Duration) (string, error) {
+	now := time.Now()
+	c := NodeClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			Issuer:    nodeFingerprint,
+			Audience:  jwt.ClaimStrings{audienceNode},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+		},
+		UserID: userID,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, c)
 	return token.SignedString(priv)

@@ -19,15 +19,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	NetworkManager_GetNodeInfo_FullMethodName            = "/network.NetworkManager/GetNodeInfo"
 	NetworkManager_RegisterPeer_FullMethodName           = "/network.NetworkManager/RegisterPeer"
 	NetworkManager_ListPeers_FullMethodName              = "/network.NetworkManager/ListPeers"
+	NetworkManager_ConnectPeer_FullMethodName            = "/network.NetworkManager/ConnectPeer"
+	NetworkManager_ApprovePeer_FullMethodName            = "/network.NetworkManager/ApprovePeer"
 	NetworkManager_SearchNetwork_FullMethodName          = "/network.NetworkManager/SearchNetwork"
+	NetworkManager_SearchCatalog_FullMethodName          = "/network.NetworkManager/SearchCatalog"
 	NetworkManager_ShareCatalog_FullMethodName           = "/network.NetworkManager/ShareCatalog"
 	NetworkManager_RequestBorrow_FullMethodName          = "/network.NetworkManager/RequestBorrow"
 	NetworkManager_ReturnCurio_FullMethodName            = "/network.NetworkManager/ReturnCurio"
 	NetworkManager_VerifyUser_FullMethodName             = "/network.NetworkManager/VerifyUser"
+	NetworkManager_IssueGuestToken_FullMethodName        = "/network.NetworkManager/IssueGuestToken"
+	NetworkManager_AuthenticateGuest_FullMethodName      = "/network.NetworkManager/AuthenticateGuest"
+	NetworkManager_GetUserLoans_FullMethodName           = "/network.NetworkManager/GetUserLoans"
+	NetworkManager_RequestDigitalLease_FullMethodName    = "/network.NetworkManager/RequestDigitalLease"
+	NetworkManager_RevokeDigitalLease_FullMethodName     = "/network.NetworkManager/RevokeDigitalLease"
 	NetworkManager_InitiateRemoteTransfer_FullMethodName = "/network.NetworkManager/InitiateRemoteTransfer"
 	NetworkManager_NotifyTransferUpdate_FullMethodName   = "/network.NetworkManager/NotifyTransferUpdate"
+	NetworkManager_ForwardTransfer_FullMethodName        = "/network.NetworkManager/ForwardTransfer"
+	NetworkManager_RelayTransferUpdate_FullMethodName    = "/network.NetworkManager/RelayTransferUpdate"
 )
 
 // NetworkManagerClient is the client API for NetworkManager service.
@@ -35,20 +46,46 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkManagerClient interface {
 	// Peer registry
+	GetNodeInfo(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerAck, error)
 	RegisterPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error)
 	ListPeers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerList, error)
+	// Admin-initiated peer management (local BFF only)
+	ConnectPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error)
+	ApprovePeer(ctx context.Context, in *NodeId, opts ...grpc.CallOption) (*Empty, error)
 	// Cross-node catalog search (streaming — one result per responding peer)
 	SearchNetwork(ctx context.Context, in *NetworkSearchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[NetworkSearchResult], error)
+	// Called by a peer node's network-manager to search this node's local catalog.
+	// Returns a single result (this node only — no fan-out).
+	SearchCatalog(ctx context.Context, in *NetworkSearchRequest, opts ...grpc.CallOption) (*NetworkSearchResult, error)
 	// Catalog snapshot sync
 	ShareCatalog(ctx context.Context, in *CatalogSnapshot, opts ...grpc.CallOption) (*SyncAck, error)
 	// Cross-node borrowing
 	RequestBorrow(ctx context.Context, in *BorrowRequest, opts ...grpc.CallOption) (*BorrowResponse, error)
 	ReturnCurio(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*ReturnResponse, error)
-	// Identity verification (used by remote nodes to validate a foreign JWT)
+	// Identity verification (CONNECTED peers only — home node confirms a user JWT is valid)
 	VerifyUser(ctx context.Context, in *UserToken, opts ...grpc.CallOption) (*VerificationResult, error)
+	// Cross-node user authentication
+	// IssueGuestToken: home node issues a short-lived, audience-scoped JWT for a user
+	//
+	//	— called by a CONNECTED peer that wants to authenticate one of this node's users.
+	//
+	// AuthenticateGuest: local BFF calls this on its own node to log in a cross-node user;
+	//
+	//	the network-manager dials the home node, obtains a guest token, creates a thin
+	//	local user record, and returns a node-local session JWT.
+	IssueGuestToken(ctx context.Context, in *GuestTokenRequest, opts ...grpc.CallOption) (*GuestTokenResponse, error)
+	AuthenticateGuest(ctx context.Context, in *AuthenticateGuestRequest, opts ...grpc.CallOption) (*AuthenticateGuestResponse, error)
+	// Cross-node loans/leases — streams one result per CONNECTED peer
+	GetUserLoans(ctx context.Context, in *UserLoansRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[UserLoansResult], error)
+	// Cross-node digital leasing
+	RequestDigitalLease(ctx context.Context, in *DigitalLeaseRequest, opts ...grpc.CallOption) (*DigitalLeaseResponse, error)
+	RevokeDigitalLease(ctx context.Context, in *LeaseRef, opts ...grpc.CallOption) (*Empty, error)
 	// Cross-node physical transfers
 	InitiateRemoteTransfer(ctx context.Context, in *RemoteTransferRequest, opts ...grpc.CallOption) (*RemoteTransferAck, error)
 	NotifyTransferUpdate(ctx context.Context, in *TransferUpdate, opts ...grpc.CallOption) (*Empty, error)
+	// Outbound transfer relay — called by LOCAL curios-manager only
+	ForwardTransfer(ctx context.Context, in *ForwardTransferRequest, opts ...grpc.CallOption) (*ForwardTransferAck, error)
+	RelayTransferUpdate(ctx context.Context, in *RelayTransferUpdateRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type networkManagerClient struct {
@@ -57,6 +94,16 @@ type networkManagerClient struct {
 
 func NewNetworkManagerClient(cc grpc.ClientConnInterface) NetworkManagerClient {
 	return &networkManagerClient{cc}
+}
+
+func (c *networkManagerClient) GetNodeInfo(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerAck, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PeerAck)
+	err := c.cc.Invoke(ctx, NetworkManager_GetNodeInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *networkManagerClient) RegisterPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error) {
@@ -73,6 +120,26 @@ func (c *networkManagerClient) ListPeers(ctx context.Context, in *Empty, opts ..
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PeerList)
 	err := c.cc.Invoke(ctx, NetworkManager_ListPeers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) ConnectPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PeerAck)
+	err := c.cc.Invoke(ctx, NetworkManager_ConnectPeer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) ApprovePeer(ctx context.Context, in *NodeId, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, NetworkManager_ApprovePeer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +164,16 @@ func (c *networkManagerClient) SearchNetwork(ctx context.Context, in *NetworkSea
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type NetworkManager_SearchNetworkClient = grpc.ServerStreamingClient[NetworkSearchResult]
+
+func (c *networkManagerClient) SearchCatalog(ctx context.Context, in *NetworkSearchRequest, opts ...grpc.CallOption) (*NetworkSearchResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NetworkSearchResult)
+	err := c.cc.Invoke(ctx, NetworkManager_SearchCatalog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
 func (c *networkManagerClient) ShareCatalog(ctx context.Context, in *CatalogSnapshot, opts ...grpc.CallOption) (*SyncAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -138,6 +215,65 @@ func (c *networkManagerClient) VerifyUser(ctx context.Context, in *UserToken, op
 	return out, nil
 }
 
+func (c *networkManagerClient) IssueGuestToken(ctx context.Context, in *GuestTokenRequest, opts ...grpc.CallOption) (*GuestTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GuestTokenResponse)
+	err := c.cc.Invoke(ctx, NetworkManager_IssueGuestToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) AuthenticateGuest(ctx context.Context, in *AuthenticateGuestRequest, opts ...grpc.CallOption) (*AuthenticateGuestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthenticateGuestResponse)
+	err := c.cc.Invoke(ctx, NetworkManager_AuthenticateGuest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) GetUserLoans(ctx context.Context, in *UserLoansRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[UserLoansResult], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &NetworkManager_ServiceDesc.Streams[1], NetworkManager_GetUserLoans_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[UserLoansRequest, UserLoansResult]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type NetworkManager_GetUserLoansClient = grpc.ServerStreamingClient[UserLoansResult]
+
+func (c *networkManagerClient) RequestDigitalLease(ctx context.Context, in *DigitalLeaseRequest, opts ...grpc.CallOption) (*DigitalLeaseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DigitalLeaseResponse)
+	err := c.cc.Invoke(ctx, NetworkManager_RequestDigitalLease_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) RevokeDigitalLease(ctx context.Context, in *LeaseRef, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, NetworkManager_RevokeDigitalLease_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *networkManagerClient) InitiateRemoteTransfer(ctx context.Context, in *RemoteTransferRequest, opts ...grpc.CallOption) (*RemoteTransferAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RemoteTransferAck)
@@ -158,25 +294,71 @@ func (c *networkManagerClient) NotifyTransferUpdate(ctx context.Context, in *Tra
 	return out, nil
 }
 
+func (c *networkManagerClient) ForwardTransfer(ctx context.Context, in *ForwardTransferRequest, opts ...grpc.CallOption) (*ForwardTransferAck, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ForwardTransferAck)
+	err := c.cc.Invoke(ctx, NetworkManager_ForwardTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) RelayTransferUpdate(ctx context.Context, in *RelayTransferUpdateRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, NetworkManager_RelayTransferUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NetworkManagerServer is the server API for NetworkManager service.
 // All implementations must embed UnimplementedNetworkManagerServer
 // for forward compatibility.
 type NetworkManagerServer interface {
 	// Peer registry
+	GetNodeInfo(context.Context, *Empty) (*PeerAck, error)
 	RegisterPeer(context.Context, *PeerInfo) (*PeerAck, error)
 	ListPeers(context.Context, *Empty) (*PeerList, error)
+	// Admin-initiated peer management (local BFF only)
+	ConnectPeer(context.Context, *PeerInfo) (*PeerAck, error)
+	ApprovePeer(context.Context, *NodeId) (*Empty, error)
 	// Cross-node catalog search (streaming — one result per responding peer)
 	SearchNetwork(*NetworkSearchRequest, grpc.ServerStreamingServer[NetworkSearchResult]) error
+	// Called by a peer node's network-manager to search this node's local catalog.
+	// Returns a single result (this node only — no fan-out).
+	SearchCatalog(context.Context, *NetworkSearchRequest) (*NetworkSearchResult, error)
 	// Catalog snapshot sync
 	ShareCatalog(context.Context, *CatalogSnapshot) (*SyncAck, error)
 	// Cross-node borrowing
 	RequestBorrow(context.Context, *BorrowRequest) (*BorrowResponse, error)
 	ReturnCurio(context.Context, *ReturnRequest) (*ReturnResponse, error)
-	// Identity verification (used by remote nodes to validate a foreign JWT)
+	// Identity verification (CONNECTED peers only — home node confirms a user JWT is valid)
 	VerifyUser(context.Context, *UserToken) (*VerificationResult, error)
+	// Cross-node user authentication
+	// IssueGuestToken: home node issues a short-lived, audience-scoped JWT for a user
+	//
+	//	— called by a CONNECTED peer that wants to authenticate one of this node's users.
+	//
+	// AuthenticateGuest: local BFF calls this on its own node to log in a cross-node user;
+	//
+	//	the network-manager dials the home node, obtains a guest token, creates a thin
+	//	local user record, and returns a node-local session JWT.
+	IssueGuestToken(context.Context, *GuestTokenRequest) (*GuestTokenResponse, error)
+	AuthenticateGuest(context.Context, *AuthenticateGuestRequest) (*AuthenticateGuestResponse, error)
+	// Cross-node loans/leases — streams one result per CONNECTED peer
+	GetUserLoans(*UserLoansRequest, grpc.ServerStreamingServer[UserLoansResult]) error
+	// Cross-node digital leasing
+	RequestDigitalLease(context.Context, *DigitalLeaseRequest) (*DigitalLeaseResponse, error)
+	RevokeDigitalLease(context.Context, *LeaseRef) (*Empty, error)
 	// Cross-node physical transfers
 	InitiateRemoteTransfer(context.Context, *RemoteTransferRequest) (*RemoteTransferAck, error)
 	NotifyTransferUpdate(context.Context, *TransferUpdate) (*Empty, error)
+	// Outbound transfer relay — called by LOCAL curios-manager only
+	ForwardTransfer(context.Context, *ForwardTransferRequest) (*ForwardTransferAck, error)
+	RelayTransferUpdate(context.Context, *RelayTransferUpdateRequest) (*Empty, error)
 	mustEmbedUnimplementedNetworkManagerServer()
 }
 
@@ -187,14 +369,26 @@ type NetworkManagerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedNetworkManagerServer struct{}
 
+func (UnimplementedNetworkManagerServer) GetNodeInfo(context.Context, *Empty) (*PeerAck, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNodeInfo not implemented")
+}
 func (UnimplementedNetworkManagerServer) RegisterPeer(context.Context, *PeerInfo) (*PeerAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterPeer not implemented")
 }
 func (UnimplementedNetworkManagerServer) ListPeers(context.Context, *Empty) (*PeerList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPeers not implemented")
 }
+func (UnimplementedNetworkManagerServer) ConnectPeer(context.Context, *PeerInfo) (*PeerAck, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConnectPeer not implemented")
+}
+func (UnimplementedNetworkManagerServer) ApprovePeer(context.Context, *NodeId) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApprovePeer not implemented")
+}
 func (UnimplementedNetworkManagerServer) SearchNetwork(*NetworkSearchRequest, grpc.ServerStreamingServer[NetworkSearchResult]) error {
 	return status.Error(codes.Unimplemented, "method SearchNetwork not implemented")
+}
+func (UnimplementedNetworkManagerServer) SearchCatalog(context.Context, *NetworkSearchRequest) (*NetworkSearchResult, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchCatalog not implemented")
 }
 func (UnimplementedNetworkManagerServer) ShareCatalog(context.Context, *CatalogSnapshot) (*SyncAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method ShareCatalog not implemented")
@@ -208,11 +402,32 @@ func (UnimplementedNetworkManagerServer) ReturnCurio(context.Context, *ReturnReq
 func (UnimplementedNetworkManagerServer) VerifyUser(context.Context, *UserToken) (*VerificationResult, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyUser not implemented")
 }
+func (UnimplementedNetworkManagerServer) IssueGuestToken(context.Context, *GuestTokenRequest) (*GuestTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IssueGuestToken not implemented")
+}
+func (UnimplementedNetworkManagerServer) AuthenticateGuest(context.Context, *AuthenticateGuestRequest) (*AuthenticateGuestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AuthenticateGuest not implemented")
+}
+func (UnimplementedNetworkManagerServer) GetUserLoans(*UserLoansRequest, grpc.ServerStreamingServer[UserLoansResult]) error {
+	return status.Error(codes.Unimplemented, "method GetUserLoans not implemented")
+}
+func (UnimplementedNetworkManagerServer) RequestDigitalLease(context.Context, *DigitalLeaseRequest) (*DigitalLeaseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestDigitalLease not implemented")
+}
+func (UnimplementedNetworkManagerServer) RevokeDigitalLease(context.Context, *LeaseRef) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeDigitalLease not implemented")
+}
 func (UnimplementedNetworkManagerServer) InitiateRemoteTransfer(context.Context, *RemoteTransferRequest) (*RemoteTransferAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method InitiateRemoteTransfer not implemented")
 }
 func (UnimplementedNetworkManagerServer) NotifyTransferUpdate(context.Context, *TransferUpdate) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method NotifyTransferUpdate not implemented")
+}
+func (UnimplementedNetworkManagerServer) ForwardTransfer(context.Context, *ForwardTransferRequest) (*ForwardTransferAck, error) {
+	return nil, status.Error(codes.Unimplemented, "method ForwardTransfer not implemented")
+}
+func (UnimplementedNetworkManagerServer) RelayTransferUpdate(context.Context, *RelayTransferUpdateRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RelayTransferUpdate not implemented")
 }
 func (UnimplementedNetworkManagerServer) mustEmbedUnimplementedNetworkManagerServer() {}
 func (UnimplementedNetworkManagerServer) testEmbeddedByValue()                        {}
@@ -233,6 +448,24 @@ func RegisterNetworkManagerServer(s grpc.ServiceRegistrar, srv NetworkManagerSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&NetworkManager_ServiceDesc, srv)
+}
+
+func _NetworkManager_GetNodeInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).GetNodeInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_GetNodeInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).GetNodeInfo(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _NetworkManager_RegisterPeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -271,6 +504,42 @@ func _NetworkManager_ListPeers_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkManager_ConnectPeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).ConnectPeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_ConnectPeer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).ConnectPeer(ctx, req.(*PeerInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_ApprovePeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NodeId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).ApprovePeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_ApprovePeer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).ApprovePeer(ctx, req.(*NodeId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _NetworkManager_SearchNetwork_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(NetworkSearchRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -281,6 +550,24 @@ func _NetworkManager_SearchNetwork_Handler(srv interface{}, stream grpc.ServerSt
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type NetworkManager_SearchNetworkServer = grpc.ServerStreamingServer[NetworkSearchResult]
+
+func _NetworkManager_SearchCatalog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NetworkSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).SearchCatalog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_SearchCatalog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).SearchCatalog(ctx, req.(*NetworkSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 func _NetworkManager_ShareCatalog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CatalogSnapshot)
@@ -354,6 +641,89 @@ func _NetworkManager_VerifyUser_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkManager_IssueGuestToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GuestTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).IssueGuestToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_IssueGuestToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).IssueGuestToken(ctx, req.(*GuestTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_AuthenticateGuest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticateGuestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).AuthenticateGuest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_AuthenticateGuest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).AuthenticateGuest(ctx, req.(*AuthenticateGuestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_GetUserLoans_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(UserLoansRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(NetworkManagerServer).GetUserLoans(m, &grpc.GenericServerStream[UserLoansRequest, UserLoansResult]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type NetworkManager_GetUserLoansServer = grpc.ServerStreamingServer[UserLoansResult]
+
+func _NetworkManager_RequestDigitalLease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DigitalLeaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).RequestDigitalLease(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_RequestDigitalLease_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).RequestDigitalLease(ctx, req.(*DigitalLeaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_RevokeDigitalLease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaseRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).RevokeDigitalLease(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_RevokeDigitalLease_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).RevokeDigitalLease(ctx, req.(*LeaseRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _NetworkManager_InitiateRemoteTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoteTransferRequest)
 	if err := dec(in); err != nil {
@@ -390,6 +760,42 @@ func _NetworkManager_NotifyTransferUpdate_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkManager_ForwardTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForwardTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).ForwardTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_ForwardTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).ForwardTransfer(ctx, req.(*ForwardTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_RelayTransferUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RelayTransferUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).RelayTransferUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_RelayTransferUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).RelayTransferUpdate(ctx, req.(*RelayTransferUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NetworkManager_ServiceDesc is the grpc.ServiceDesc for NetworkManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -398,12 +804,28 @@ var NetworkManager_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*NetworkManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetNodeInfo",
+			Handler:    _NetworkManager_GetNodeInfo_Handler,
+		},
+		{
 			MethodName: "RegisterPeer",
 			Handler:    _NetworkManager_RegisterPeer_Handler,
 		},
 		{
 			MethodName: "ListPeers",
 			Handler:    _NetworkManager_ListPeers_Handler,
+		},
+		{
+			MethodName: "ConnectPeer",
+			Handler:    _NetworkManager_ConnectPeer_Handler,
+		},
+		{
+			MethodName: "ApprovePeer",
+			Handler:    _NetworkManager_ApprovePeer_Handler,
+		},
+		{
+			MethodName: "SearchCatalog",
+			Handler:    _NetworkManager_SearchCatalog_Handler,
 		},
 		{
 			MethodName: "ShareCatalog",
@@ -422,6 +844,22 @@ var NetworkManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NetworkManager_VerifyUser_Handler,
 		},
 		{
+			MethodName: "IssueGuestToken",
+			Handler:    _NetworkManager_IssueGuestToken_Handler,
+		},
+		{
+			MethodName: "AuthenticateGuest",
+			Handler:    _NetworkManager_AuthenticateGuest_Handler,
+		},
+		{
+			MethodName: "RequestDigitalLease",
+			Handler:    _NetworkManager_RequestDigitalLease_Handler,
+		},
+		{
+			MethodName: "RevokeDigitalLease",
+			Handler:    _NetworkManager_RevokeDigitalLease_Handler,
+		},
+		{
 			MethodName: "InitiateRemoteTransfer",
 			Handler:    _NetworkManager_InitiateRemoteTransfer_Handler,
 		},
@@ -429,11 +867,24 @@ var NetworkManager_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "NotifyTransferUpdate",
 			Handler:    _NetworkManager_NotifyTransferUpdate_Handler,
 		},
+		{
+			MethodName: "ForwardTransfer",
+			Handler:    _NetworkManager_ForwardTransfer_Handler,
+		},
+		{
+			MethodName: "RelayTransferUpdate",
+			Handler:    _NetworkManager_RelayTransferUpdate_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "SearchNetwork",
 			Handler:       _NetworkManager_SearchNetwork_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetUserLoans",
+			Handler:       _NetworkManager_GetUserLoans_Handler,
 			ServerStreams: true,
 		},
 	},

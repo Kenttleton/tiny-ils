@@ -15,11 +15,18 @@ message PeerInfo {
   string public_key   = 2; // base64-encoded Ed25519 public key
   string address      = 3; // host:port of the peer's network-manager
   string display_name = 4;
+  string status       = 5; // PENDING | CONNECTED (read-only; ignored on input)
+  repeated string capabilities = 6; // e.g. ["curios","users","ui"]
+}
+
+message NodeId {
+  string node_id = 1;
 }
 
 message PeerAck {
-  string node_id    = 1; // this node's ID
-  string public_key = 2; // this node's public key (for mutual exchange)
+  string node_id              = 1; // this node's ID
+  string public_key           = 2; // this node's public key (for mutual exchange)
+  repeated string capabilities = 3; // capabilities this node offers
 }
 
 message PeerList {
@@ -69,20 +76,26 @@ message NetworkSearchResult {
 // ─── Cross-node borrowing ────────────────────────────────────────────────────
 
 message BorrowRequest {
-  string curio_id         = 1;
-  string copy_id          = 2;
-  string user_jwt         = 3; // JWT signed by the user's home node
-  string requesting_node  = 4;
+  string curio_id        = 1; // ISO 18626: bibliographicInfo identifier
+  string copy_id         = 2; // physical only; empty = auto-select available copy
+  string user_jwt        = 3; // ISO 18626: patron credential (home-node signed)
+  string requesting_node = 4; // ISO 18626: requestingAgencyId
+  int64  need_before     = 5; // ISO 18626: serviceInfo.needBefore (unix; 0 = default loan period)
 }
 
 message BorrowResponse {
-  string loan_id  = 1;
-  int64  due_date = 2; // unix seconds
+  string loan_id      = 1; // physical: PhysicalLoan.id; digital: DigitalLease.id
+  int64  due_date     = 2; // physical: due date (unix); 0 for digital
+  string copy_id      = 3; // physical: checked-out copy; pass back in ReturnRequest.copy_id
+  bool   is_digital   = 4;
+  int64  expires_at   = 5; // digital: lease expiry (unix)
+  string access_token = 6; // digital: LCP license ID or provider access token
 }
 
 message ReturnRequest {
-  string loan_id = 1;
-  string user_jwt = 2;
+  string loan_id  = 1; // ISO 18626: loan/lease identifier
+  string user_jwt = 2; // ISO 18626: patron credential
+  string copy_id  = 3; // physical: copy from BorrowResponse; empty for digital (early return supported)
 }
 
 message ReturnResponse {
@@ -128,15 +141,125 @@ message VerificationResult {
   string error       = 5;
 }
 
+// ─── Cross-node user authentication ──────────────────────────────────────────
+
+// Called by a CONNECTED peer (Node B) on the home node (Node A) to obtain a
+// short-lived, audience-scoped JWT for one of the home node's users.
+message GuestTokenRequest {
+  string user_id         = 1; // user's UUID on the home node
+  string requesting_node = 2; // fingerprint of the node requesting the token
+}
+
+message GuestTokenResponse {
+  string token        = 1; // JWT signed by the home node; aud = requesting_node
+  string display_name = 2; // user's display name for thin local record creation
+}
+
+// Called by the local BFF to log in a cross-node user via their home node.
+// The network-manager dials the home node, calls IssueGuestToken, creates a
+// thin local user record, and returns a node-local session JWT.
+message AuthenticateGuestRequest {
+  string user_id           = 1; // user's UUID on the home node
+  string home_node_address = 2; // gRPC address (host:port) of the home node
+  string home_node_id      = 3; // fingerprint of the home node (used to verify response)
+}
+
+message AuthenticateGuestResponse {
+  string token        = 1; // local session JWT (signed by this node)
+  string display_name = 2;
+}
+
+// ─── Cross-node loans / leases ───────────────────────────────────────────────
+
+// Fan-out query: streams one result per CONNECTED peer (same pattern as SearchNetwork).
+message UserLoansRequest {
+  string user_id      = 1; // user's UUID (on their home node)
+  string user_node_id = 2; // fingerprint of the user's home node
+  bool   active_only  = 3; // if true, exclude returned/revoked records
+}
+
+// Unified physical-loan + digital-lease record for the fan-out response.
+message RemoteLoan {
+  string loan_id     = 1;
+  string curio_id    = 2;
+  string curio_title = 3;
+  bool   is_digital  = 4;
+  int64  issued_at   = 5;
+  int64  due_date    = 6; // physical: when it must be returned (0 for digital)
+  int64  expires_at  = 7; // digital: when access expires (0 for physical)
+  bool   closed      = 8; // true if returned or revoked
+  string node_id     = 9; // node that owns the item
+  string node_name   = 10;
+}
+
+message UserLoansResult {
+  string node_id            = 1;
+  string node_name          = 2;
+  repeated RemoteLoan loans = 3;
+  string error              = 4; // non-empty if this peer failed to respond
+}
+
+// ─── Cross-node digital leasing ──────────────────────────────────────────────
+
+message DigitalLeaseRequest {
+  string curio_id        = 1;
+  string user_jwt        = 2; // JWT signed by the user's home node; aud = this node
+  string requesting_node = 3; // home node fingerprint (must match JWT iss)
+}
+
+message DigitalLeaseResponse {
+  string lease_id     = 1;
+  string access_token = 2;
+  string license_url  = 3; // LSD URL when LCP is enabled
+  int64  expires_at   = 4;
+}
+
+message LeaseRef {
+  string lease_id = 1;
+  string user_jwt = 2;
+}
+
+// ─── Outbound transfer relay (curios-manager → network-manager → remote node) ─
+
+// ForwardTransferRequest asks the local network-manager to call InitiateRemoteTransfer
+// on the specified peer. The network-manager does not interpret the transfer data —
+// it only routes to the peer and checks the "curios" capability.
+message ForwardTransferRequest {
+  string                target_node_id = 1; // peer to contact (source node for ILL)
+  RemoteTransferRequest request        = 2;
+}
+
+message ForwardTransferAck {
+  string transfer_id = 1;
+  bool   accepted    = 2;
+}
+
+// RelayTransferUpdateRequest asks the local network-manager to call NotifyTransferUpdate
+// on the specified peer. Curios-manager sets target_node_id from the transfer record's
+// source_node or dest_node. Network-manager checks "curios" capability before routing.
+message RelayTransferUpdateRequest {
+  string         target_node_id = 1;
+  TransferUpdate update         = 2;
+}
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 service NetworkManager {
   // Peer registry
+  rpc GetNodeInfo(Empty) returns (PeerAck);
   rpc RegisterPeer(PeerInfo) returns (PeerAck);
   rpc ListPeers(Empty) returns (PeerList);
 
+  // Admin-initiated peer management (local BFF only)
+  rpc ConnectPeer(PeerInfo) returns (PeerAck);    // outbound: store + call remote RegisterPeer
+  rpc ApprovePeer(NodeId) returns (Empty);         // approve a PENDING inbound peer
+
   // Cross-node catalog search (streaming — one result per responding peer)
   rpc SearchNetwork(NetworkSearchRequest) returns (stream NetworkSearchResult);
+
+  // Called by a peer node's network-manager to search this node's local catalog.
+  // Returns a single result (this node only — no fan-out).
+  rpc SearchCatalog(NetworkSearchRequest) returns (NetworkSearchResult);
 
   // Catalog snapshot sync
   rpc ShareCatalog(CatalogSnapshot) returns (SyncAck);
@@ -145,10 +268,30 @@ service NetworkManager {
   rpc RequestBorrow(BorrowRequest) returns (BorrowResponse);
   rpc ReturnCurio(ReturnRequest) returns (ReturnResponse);
 
-  // Identity verification (used by remote nodes to validate a foreign JWT)
+  // Identity verification (CONNECTED peers only — home node confirms a user JWT is valid)
   rpc VerifyUser(UserToken) returns (VerificationResult);
+
+  // Cross-node user authentication
+  // IssueGuestToken: home node issues a short-lived, audience-scoped JWT for a user
+  //   — called by a CONNECTED peer that wants to authenticate one of this node's users.
+  // AuthenticateGuest: local BFF calls this on its own node to log in a cross-node user;
+  //   the network-manager dials the home node, obtains a guest token, creates a thin
+  //   local user record, and returns a node-local session JWT.
+  rpc IssueGuestToken(GuestTokenRequest)         returns (GuestTokenResponse);
+  rpc AuthenticateGuest(AuthenticateGuestRequest) returns (AuthenticateGuestResponse);
+
+  // Cross-node loans/leases — streams one result per CONNECTED peer
+  rpc GetUserLoans(UserLoansRequest) returns (stream UserLoansResult);
+
+  // Cross-node digital leasing
+  rpc RequestDigitalLease(DigitalLeaseRequest) returns (DigitalLeaseResponse);
+  rpc RevokeDigitalLease(LeaseRef)             returns (Empty);
 
   // Cross-node physical transfers
   rpc InitiateRemoteTransfer(RemoteTransferRequest) returns (RemoteTransferAck);
   rpc NotifyTransferUpdate(TransferUpdate)           returns (Empty);
+
+  // Outbound transfer relay — called by LOCAL curios-manager only
+  rpc ForwardTransfer(ForwardTransferRequest)                 returns (ForwardTransferAck);
+  rpc RelayTransferUpdate(RelayTransferUpdateRequest)         returns (Empty);
 }

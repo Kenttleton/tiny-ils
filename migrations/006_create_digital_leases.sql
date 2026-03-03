@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS digital_leases (
 
 CREATE INDEX IF NOT EXISTS leases_asset_id_idx ON digital_leases (asset_id);
 CREATE INDEX IF NOT EXISTS leases_user_id_idx ON digital_leases (user_id);
-CREATE INDEX IF NOT EXISTS leases_active_idx ON digital_leases (asset_id) WHERE revoked = false AND expires_at > now();
+CREATE INDEX IF NOT EXISTS leases_active_idx ON digital_leases (asset_id, expires_at) WHERE revoked = false;

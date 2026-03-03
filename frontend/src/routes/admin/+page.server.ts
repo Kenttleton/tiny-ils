@@ -1,14 +1,20 @@
-import { getCuriosClient, call } from '$lib/server/grpc/clients';
-import type { CurioList } from '$lib/api';
+import { getCuriosClient, getNetworkClient, call } from '$lib/server/grpc/clients';
+import type { CurioList, PeerList } from '$lib/api';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	// Load a small snapshot of recent curios as a dashboard summary.
-	const data = await call<CurioList>(getCuriosClient(), 'ListCurios', {
-		query: '',
-		media_type: '',
-		limit: 10,
-		offset: 0
-	}).catch(() => ({ curios: [], total: 0 } as CurioList));
-	return { recentCurios: data.curios ?? [], total: data.total ?? 0 };
+	const [curioData, peerData] = await Promise.all([
+		call<CurioList>(getCuriosClient(), 'ListCurios', {
+			query: '',
+			media_type: '',
+			limit: 10,
+			offset: 0
+		}).catch(() => ({ curios: [], total: 0 } as CurioList)),
+		call<PeerList>(getNetworkClient(), 'ListPeers', {}).catch(() => ({ peers: [] } as PeerList))
+	]);
+	return {
+		recentCurios: curioData.curios ?? [],
+		total: curioData.total ?? 0,
+		peers: peerData.peers ?? []
+	};
 };

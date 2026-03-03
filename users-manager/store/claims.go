@@ -28,6 +28,18 @@ func (s *ClaimsStore) Grant(ctx context.Context, userID uuid.UUID, nodeID string
 	return err
 }
 
+// GrantDefault grants USER role only if no claim already exists for this (user, node) pair.
+// Safe for cross-node users — existing MANAGER grants are never downgraded.
+func (s *ClaimsStore) GrantDefault(ctx context.Context, userID uuid.UUID, nodeID string) error {
+	_, err := s.db.Exec(ctx,
+		`INSERT INTO node_claims (user_id, node_id, role, granted_by, granted_at)
+		 VALUES ($1, $2, 'USER', $1, now())
+		 ON CONFLICT (user_id, node_id) DO NOTHING`,
+		userID, nodeID,
+	)
+	return err
+}
+
 func (s *ClaimsStore) Revoke(ctx context.Context, userID uuid.UUID, nodeID string) error {
 	_, err := s.db.Exec(ctx, "DELETE FROM node_claims WHERE user_id = $1 AND node_id = $2", userID, nodeID)
 	return err

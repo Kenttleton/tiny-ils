@@ -26,14 +26,17 @@ const (
 	CuriosManager_DeleteCurio_FullMethodName        = "/curios.CuriosManager/DeleteCurio"
 	CuriosManager_EnrichMetadata_FullMethodName     = "/curios.CuriosManager/EnrichMetadata"
 	CuriosManager_ListCopies_FullMethodName         = "/curios.CuriosManager/ListCopies"
+	CuriosManager_ListLoans_FullMethodName          = "/curios.CuriosManager/ListLoans"
 	CuriosManager_CheckoutCopy_FullMethodName       = "/curios.CuriosManager/CheckoutCopy"
 	CuriosManager_ReturnCopy_FullMethodName         = "/curios.CuriosManager/ReturnCopy"
 	CuriosManager_PlaceHold_FullMethodName          = "/curios.CuriosManager/PlaceHold"
 	CuriosManager_CancelHold_FullMethodName         = "/curios.CuriosManager/CancelHold"
 	CuriosManager_GetDigitalAsset_FullMethodName    = "/curios.CuriosManager/GetDigitalAsset"
 	CuriosManager_CreateDigitalAsset_FullMethodName = "/curios.CuriosManager/CreateDigitalAsset"
+	CuriosManager_GetLease_FullMethodName           = "/curios.CuriosManager/GetLease"
 	CuriosManager_IssueLease_FullMethodName         = "/curios.CuriosManager/IssueLease"
 	CuriosManager_RevokeLease_FullMethodName        = "/curios.CuriosManager/RevokeLease"
+	CuriosManager_ListLeases_FullMethodName         = "/curios.CuriosManager/ListLeases"
 	CuriosManager_RequestTransfer_FullMethodName    = "/curios.CuriosManager/RequestTransfer"
 	CuriosManager_ApproveTransfer_FullMethodName    = "/curios.CuriosManager/ApproveTransfer"
 	CuriosManager_RejectTransfer_FullMethodName     = "/curios.CuriosManager/RejectTransfer"
@@ -58,6 +61,7 @@ type CuriosManagerClient interface {
 	EnrichMetadata(ctx context.Context, in *EnrichRequest, opts ...grpc.CallOption) (*CurioMetadata, error)
 	// Physical copies and loans
 	ListCopies(ctx context.Context, in *CurioId, opts ...grpc.CallOption) (*CopyList, error)
+	ListLoans(ctx context.Context, in *ListLoansRequest, opts ...grpc.CallOption) (*LoanList, error)
 	CheckoutCopy(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*PhysicalLoan, error)
 	ReturnCopy(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*PhysicalLoan, error)
 	PlaceHold(ctx context.Context, in *HoldRequest, opts ...grpc.CallOption) (*Hold, error)
@@ -65,8 +69,10 @@ type CuriosManagerClient interface {
 	// Digital assets and leasing
 	GetDigitalAsset(ctx context.Context, in *CurioId, opts ...grpc.CallOption) (*DigitalAsset, error)
 	CreateDigitalAsset(ctx context.Context, in *CreateDigitalAssetRequest, opts ...grpc.CallOption) (*DigitalAsset, error)
+	GetLease(ctx context.Context, in *LeaseId, opts ...grpc.CallOption) (*DigitalLease, error)
 	IssueLease(ctx context.Context, in *LeaseRequest, opts ...grpc.CallOption) (*DigitalLease, error)
 	RevokeLease(ctx context.Context, in *LeaseId, opts ...grpc.CallOption) (*Empty, error)
+	ListLeases(ctx context.Context, in *ListLeasesRequest, opts ...grpc.CallOption) (*DigitalLeaseList, error)
 	// Physical copy transfers
 	RequestTransfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*CopyTransfer, error)
 	ApproveTransfer(ctx context.Context, in *TransferAction, opts ...grpc.CallOption) (*CopyTransfer, error)
@@ -156,6 +162,16 @@ func (c *curiosManagerClient) ListCopies(ctx context.Context, in *CurioId, opts 
 	return out, nil
 }
 
+func (c *curiosManagerClient) ListLoans(ctx context.Context, in *ListLoansRequest, opts ...grpc.CallOption) (*LoanList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoanList)
+	err := c.cc.Invoke(ctx, CuriosManager_ListLoans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *curiosManagerClient) CheckoutCopy(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*PhysicalLoan, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PhysicalLoan)
@@ -216,6 +232,16 @@ func (c *curiosManagerClient) CreateDigitalAsset(ctx context.Context, in *Create
 	return out, nil
 }
 
+func (c *curiosManagerClient) GetLease(ctx context.Context, in *LeaseId, opts ...grpc.CallOption) (*DigitalLease, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DigitalLease)
+	err := c.cc.Invoke(ctx, CuriosManager_GetLease_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *curiosManagerClient) IssueLease(ctx context.Context, in *LeaseRequest, opts ...grpc.CallOption) (*DigitalLease, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DigitalLease)
@@ -230,6 +256,16 @@ func (c *curiosManagerClient) RevokeLease(ctx context.Context, in *LeaseId, opts
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, CuriosManager_RevokeLease_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *curiosManagerClient) ListLeases(ctx context.Context, in *ListLeasesRequest, opts ...grpc.CallOption) (*DigitalLeaseList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DigitalLeaseList)
+	err := c.cc.Invoke(ctx, CuriosManager_ListLeases_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -330,6 +366,7 @@ type CuriosManagerServer interface {
 	EnrichMetadata(context.Context, *EnrichRequest) (*CurioMetadata, error)
 	// Physical copies and loans
 	ListCopies(context.Context, *CurioId) (*CopyList, error)
+	ListLoans(context.Context, *ListLoansRequest) (*LoanList, error)
 	CheckoutCopy(context.Context, *CheckoutRequest) (*PhysicalLoan, error)
 	ReturnCopy(context.Context, *ReturnRequest) (*PhysicalLoan, error)
 	PlaceHold(context.Context, *HoldRequest) (*Hold, error)
@@ -337,8 +374,10 @@ type CuriosManagerServer interface {
 	// Digital assets and leasing
 	GetDigitalAsset(context.Context, *CurioId) (*DigitalAsset, error)
 	CreateDigitalAsset(context.Context, *CreateDigitalAssetRequest) (*DigitalAsset, error)
+	GetLease(context.Context, *LeaseId) (*DigitalLease, error)
 	IssueLease(context.Context, *LeaseRequest) (*DigitalLease, error)
 	RevokeLease(context.Context, *LeaseId) (*Empty, error)
+	ListLeases(context.Context, *ListLeasesRequest) (*DigitalLeaseList, error)
 	// Physical copy transfers
 	RequestTransfer(context.Context, *TransferRequest) (*CopyTransfer, error)
 	ApproveTransfer(context.Context, *TransferAction) (*CopyTransfer, error)
@@ -379,6 +418,9 @@ func (UnimplementedCuriosManagerServer) EnrichMetadata(context.Context, *EnrichR
 func (UnimplementedCuriosManagerServer) ListCopies(context.Context, *CurioId) (*CopyList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCopies not implemented")
 }
+func (UnimplementedCuriosManagerServer) ListLoans(context.Context, *ListLoansRequest) (*LoanList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLoans not implemented")
+}
 func (UnimplementedCuriosManagerServer) CheckoutCopy(context.Context, *CheckoutRequest) (*PhysicalLoan, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckoutCopy not implemented")
 }
@@ -397,11 +439,17 @@ func (UnimplementedCuriosManagerServer) GetDigitalAsset(context.Context, *CurioI
 func (UnimplementedCuriosManagerServer) CreateDigitalAsset(context.Context, *CreateDigitalAssetRequest) (*DigitalAsset, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateDigitalAsset not implemented")
 }
+func (UnimplementedCuriosManagerServer) GetLease(context.Context, *LeaseId) (*DigitalLease, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLease not implemented")
+}
 func (UnimplementedCuriosManagerServer) IssueLease(context.Context, *LeaseRequest) (*DigitalLease, error) {
 	return nil, status.Error(codes.Unimplemented, "method IssueLease not implemented")
 }
 func (UnimplementedCuriosManagerServer) RevokeLease(context.Context, *LeaseId) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RevokeLease not implemented")
+}
+func (UnimplementedCuriosManagerServer) ListLeases(context.Context, *ListLeasesRequest) (*DigitalLeaseList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLeases not implemented")
 }
 func (UnimplementedCuriosManagerServer) RequestTransfer(context.Context, *TransferRequest) (*CopyTransfer, error) {
 	return nil, status.Error(codes.Unimplemented, "method RequestTransfer not implemented")
@@ -574,6 +622,24 @@ func _CuriosManager_ListCopies_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CuriosManager_ListLoans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLoansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CuriosManagerServer).ListLoans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CuriosManager_ListLoans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CuriosManagerServer).ListLoans(ctx, req.(*ListLoansRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CuriosManager_CheckoutCopy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckoutRequest)
 	if err := dec(in); err != nil {
@@ -682,6 +748,24 @@ func _CuriosManager_CreateDigitalAsset_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CuriosManager_GetLease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaseId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CuriosManagerServer).GetLease(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CuriosManager_GetLease_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CuriosManagerServer).GetLease(ctx, req.(*LeaseId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CuriosManager_IssueLease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LeaseRequest)
 	if err := dec(in); err != nil {
@@ -714,6 +798,24 @@ func _CuriosManager_RevokeLease_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CuriosManagerServer).RevokeLease(ctx, req.(*LeaseId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CuriosManager_ListLeases_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLeasesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CuriosManagerServer).ListLeases(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CuriosManager_ListLeases_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CuriosManagerServer).ListLeases(ctx, req.(*ListLeasesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -898,6 +1000,10 @@ var CuriosManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CuriosManager_ListCopies_Handler,
 		},
 		{
+			MethodName: "ListLoans",
+			Handler:    _CuriosManager_ListLoans_Handler,
+		},
+		{
 			MethodName: "CheckoutCopy",
 			Handler:    _CuriosManager_CheckoutCopy_Handler,
 		},
@@ -922,12 +1028,20 @@ var CuriosManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CuriosManager_CreateDigitalAsset_Handler,
 		},
 		{
+			MethodName: "GetLease",
+			Handler:    _CuriosManager_GetLease_Handler,
+		},
+		{
 			MethodName: "IssueLease",
 			Handler:    _CuriosManager_IssueLease_Handler,
 		},
 		{
 			MethodName: "RevokeLease",
 			Handler:    _CuriosManager_RevokeLease_Handler,
+		},
+		{
+			MethodName: "ListLeases",
+			Handler:    _CuriosManager_ListLeases_Handler,
 		},
 		{
 			MethodName: "RequestTransfer",

@@ -11,7 +11,8 @@
 			<a href="/admin/loans">Loans</a>
 			<a href="/admin/transfers">Transfers</a>
 			<a href="/admin/users">Users</a>
-			<a href="/admin/peers">Peers</a>
+			<a href="/admin/peers">Network</a>
+			<a href="/admin/settings">Settings</a>
 		</nav>
 	</aside>
 	<div class="content">

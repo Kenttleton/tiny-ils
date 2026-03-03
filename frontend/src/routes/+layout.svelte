@@ -14,19 +14,25 @@
 	<title>tiny-ils</title>
 </svelte:head>
 
-{#if !isAuthPage && user}
+{#if !isAuthPage}
 	<nav>
 		<a href="/" class="brand">tiny-ils</a>
 		<div class="links">
 			<a href="/browse">Browse</a>
-			<a href="/loans">My Loans</a>
-			{#if manager}
-				<a href="/admin">Admin</a>
+			{#if user}
+				<a href="/profile">Profile</a>
+				{#if manager}
+					<a href="/admin">Admin</a>
+				{/if}
 			{/if}
 		</div>
-		<form method="POST" action="/auth/logout">
-			<button type="submit">Sign out</button>
-		</form>
+		{#if user}
+			<form method="POST" action="/auth/logout">
+				<button type="submit">Sign out</button>
+			</form>
+		{:else}
+			<a href="/auth/login" class="sign-in">Sign in</a>
+		{/if}
 	</nav>
 {/if}
 
@@ -60,6 +66,17 @@
 	}
 	.links a:hover {
 		color: #111;
+	}
+	.sign-in {
+		font-size: 0.875rem;
+		padding: 0.25rem 0.75rem;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		color: #374151;
+		text-decoration: none;
+	}
+	.sign-in:hover {
+		background: #f9fafb;
 	}
 	button {
 		background: none;

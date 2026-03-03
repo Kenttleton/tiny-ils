@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"slices"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,7 +22,8 @@ func (s *NetworkService) InitiateRemoteTransfer(ctx context.Context, req *pb.Rem
 		}
 	}
 
-	_, err := s.curiosClient.RequestTransfer(ctx, &curiospb.TransferRequest{
+	xfer, err := s.curiosClient.RequestTransfer(ctx, &curiospb.TransferRequest{
+		Id:           req.TransferId,
 		CopyId:       req.CopyId,
 		TransferType: req.TransferType,
 		SourceNode:   req.SourceNode,
@@ -32,7 +35,7 @@ func (s *NetworkService) InitiateRemoteTransfer(ctx context.Context, req *pb.Rem
 		return nil, status.Errorf(codes.Internal, "create remote transfer: %v", err)
 	}
 
-	return &pb.RemoteTransferAck{TransferId: req.TransferId, Accepted: true}, nil
+	return &pb.RemoteTransferAck{TransferId: xfer.Id, Accepted: true}, nil
 }
 
 // NotifyTransferUpdate is called by a remote node when a transfer's status
@@ -68,5 +71,52 @@ func (s *NetworkService) NotifyTransferUpdate(ctx context.Context, req *pb.Trans
 		return nil, status.Errorf(codes.Internal, "update transfer: %v", err)
 	}
 
+	return &pb.Empty{}, nil
+}
+
+// ForwardTransfer is called by the LOCAL curios-manager to ask this network-manager
+// to call InitiateRemoteTransfer on the specified peer node.
+func (s *NetworkService) ForwardTransfer(ctx context.Context, req *pb.ForwardTransferRequest) (*pb.ForwardTransferAck, error) {
+	peer, err := s.peers.Get(ctx, req.TargetNodeId)
+	if err != nil || peer == nil {
+		return nil, status.Errorf(codes.NotFound, "peer %q not found", req.TargetNodeId)
+	}
+	if len(peer.Capabilities) > 0 && !slices.Contains(peer.Capabilities, "curios") {
+		return nil, status.Errorf(codes.FailedPrecondition, "peer %q lacks curios capability", req.TargetNodeId)
+	}
+
+	conn, err := grpc.NewClient(peer.Address, PeerDialOptions(s.nodeCert)...)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "dial peer %q: %v", req.TargetNodeId, err)
+	}
+	defer conn.Close()
+
+	ack, err := pb.NewNetworkManagerClient(conn).InitiateRemoteTransfer(ctx, req.Request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "InitiateRemoteTransfer on %q: %v", req.TargetNodeId, err)
+	}
+	return &pb.ForwardTransferAck{TransferId: ack.TransferId, Accepted: ack.Accepted}, nil
+}
+
+// RelayTransferUpdate is called by the LOCAL curios-manager to ask this network-manager
+// to call NotifyTransferUpdate on the specified peer node.
+func (s *NetworkService) RelayTransferUpdate(ctx context.Context, req *pb.RelayTransferUpdateRequest) (*pb.Empty, error) {
+	peer, err := s.peers.Get(ctx, req.TargetNodeId)
+	if err != nil || peer == nil {
+		return nil, status.Errorf(codes.NotFound, "peer %q not found", req.TargetNodeId)
+	}
+	if len(peer.Capabilities) > 0 && !slices.Contains(peer.Capabilities, "curios") {
+		return nil, status.Errorf(codes.FailedPrecondition, "peer %q lacks curios capability", req.TargetNodeId)
+	}
+
+	conn, err := grpc.NewClient(peer.Address, PeerDialOptions(s.nodeCert)...)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "dial peer %q: %v", req.TargetNodeId, err)
+	}
+	defer conn.Close()
+
+	if _, err := pb.NewNetworkManagerClient(conn).NotifyTransferUpdate(ctx, req.Update); err != nil {
+		return nil, status.Errorf(codes.Internal, "NotifyTransferUpdate on %q: %v", req.TargetNodeId, err)
+	}
 	return &pb.Empty{}, nil
 }

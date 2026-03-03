@@ -18,7 +18,7 @@ export function clearAuthCookie(cookies: Cookies): void {
 }
 
 /** Decode a JWT payload without verifying the signature. Used only to read claims for UI. */
-export function decodeJWTPayload(token: string): { uid?: string; claims?: Claim[] } {
+export function decodeJWTPayload(token: string): { uid?: string; claims?: Claim[]; home_node?: string } {
 	const parts = token.split('.');
 	if (parts.length !== 3) throw new Error('Invalid JWT');
 	const payload = Buffer.from(parts[1], 'base64url').toString('utf8');

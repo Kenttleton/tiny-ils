@@ -24,6 +24,17 @@ message User {
   string display_name = 3;
   string sso_provider = 4; // e.g. "google"; empty for password accounts
   int64  created_at   = 5;
+  bool   has_password = 6; // true if account has a local password set
+  string role         = 7; // optionally populated (e.g. by ListUsers): USER | MANAGER
+}
+
+message UpdateUserRequest {
+  string id               = 1;
+  string display_name     = 2; // empty = no change
+  string email            = 3; // empty = no change; requires password on SSO-only accounts
+  string new_password     = 4; // empty = no change
+  string current_password = 5; // required when changing an existing password
+  bool   unlink_sso       = 6; // clears sso_provider/sso_subject; requires password to be set
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -45,6 +56,13 @@ message SSOProfile {
   string subject      = 2; // provider's unique user ID
   string email        = 3;
   string display_name = 4;
+}
+
+// Links an SSO identity to an existing account (called after OAuth when a user is already logged in).
+message LinkSSORequest {
+  string user_id  = 1;
+  string provider = 2;
+  string subject  = 3;
 }
 
 message AuthResponse {
@@ -78,6 +96,44 @@ message BootstrapRequest {
   string email        = 1;
   string password     = 2;
   string display_name = 3;
+  string public_url   = 4; // e.g. "https://ils.example.com" — stored as the canonical origin
+}
+
+message SetupStatus {
+  bool has_manager = 1;
+}
+
+message ListUsersRequest {
+  int32 limit  = 1;
+  int32 offset = 2;
+}
+
+message UserList {
+  repeated User users = 1;
+  int32         total = 2;
+}
+
+message AppConfig {
+  string        public_url       = 1;
+  optional bool allow_localhost  = 2; // default true; false = reject requests from localhost origins
+}
+
+// ─── Cross-node identity ──────────────────────────────────────────────────────
+
+// IssueCrossNodeToken: issue a short-lived JWT scoped to a specific audience node.
+// Called by this node's network-manager when a CONNECTED peer calls IssueGuestToken.
+message CrossNodeTokenRequest {
+  string user_id       = 1; // UUID of the user on this node
+  string audience_node = 2; // fingerprint of the node that will consume the token
+}
+
+// UpsertGuestUser: create or update a thin local record for a cross-node user.
+// Called by this node's network-manager after receiving a guest token from the
+// home node — ensures the user has a local entry and a default USER claim.
+message UpsertGuestUserRequest {
+  string user_id      = 1; // UUID from the home node (preserved as-is)
+  string home_node_id = 2; // fingerprint of the user's home node
+  string display_name = 3;
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -87,13 +143,27 @@ service UsersManager {
   rpc Register(RegisterRequest) returns (AuthResponse);
   rpc Login(LoginRequest) returns (AuthResponse);
   rpc UpsertSSOUser(SSOProfile) returns (AuthResponse);
+  rpc LinkSSO(LinkSSORequest) returns (User);
   rpc GetMe(UserId) returns (User);
+  rpc UpdateUser(UpdateUserRequest) returns (User);
 
   // Node-scoped RBAC claims
   rpc GrantClaim(ClaimRequest) returns (Empty);
   rpc RevokeClaim(ClaimRequest) returns (Empty);
   rpc ListClaims(NodeId) returns (ClaimList);
 
-  // First-run: creates the initial MANAGER if none exist
+  // Admin user management
+  rpc ListUsers(ListUsersRequest) returns (UserList);
+  rpc DeleteUser(UserId) returns (Empty);
+
+  // First-run setup
   rpc BootstrapManager(BootstrapRequest) returns (AuthResponse);
+  rpc HasSetup(Empty) returns (SetupStatus);
+  rpc GetNodeID(Empty) returns (NodeId);
+  rpc GetAppConfig(Empty) returns (AppConfig);
+  rpc UpdateAppConfig(AppConfig) returns (Empty);
+
+  // Cross-node identity
+  rpc IssueCrossNodeToken(CrossNodeTokenRequest) returns (AuthResponse);
+  rpc UpsertGuestUser(UpsertGuestUserRequest)    returns (AuthResponse);
 }

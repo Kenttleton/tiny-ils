@@ -20,7 +20,9 @@ down:
 down-clean:
     docker compose down -v
 
-# Run database migrations
+# Run database migrations against DATABASE_URL (post-release / production use).
+# During development the schema is initialized automatically via
+# postgres's /docker-entrypoint-initdb.d mechanism — no manual migration needed.
 db-migrate:
     go run ./tools/migrate
 

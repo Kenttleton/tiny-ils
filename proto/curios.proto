@@ -27,12 +27,14 @@ message TransferId {
 // ─── Physical copy transfers ─────────────────────────────────────────────────
 
 message TransferRequest {
-  string copy_id       = 1;
-  string transfer_type = 2; // ILL | RETURN | PERMANENT
-  string source_node   = 3;
-  string dest_node     = 4;
-  string initiated_by  = 5; // manager userId
-  string notes         = 6;
+  string copy_id        = 1; // local UUID on source node; used to mark copy REQUESTED
+  string transfer_type  = 2; // ILL | RETURN | PERMANENT
+  string source_node    = 3;
+  string dest_node      = 4;
+  string initiated_by   = 5; // manager userId
+  string notes          = 6;
+  string id             = 7; // pre-assigned transfer ID; generated if empty
+  string global_copy_id = 8; // "{home_node}/{copy_uuid}"; required for dest-node entries
 }
 
 message TransferAction {
@@ -48,19 +50,19 @@ message ListTransfersRequest {
 }
 
 message CopyTransfer {
-  string id            = 1;
-  string copy_id       = 2;
-  string transfer_type = 3; // ILL | RETURN | PERMANENT
-  string source_node   = 4;
-  string dest_node     = 5;
-  string initiated_by  = 6; // manager userId
-  string approved_by   = 7; // manager userId who confirmed receipt
-  string status        = 8; // PENDING | APPROVED | IN_TRANSIT | RECEIVED | REJECTED | CANCELLED
-  string notes         = 9;
-  int64  requested_at  = 10;
-  int64  approved_at   = 11; // 0 if not yet approved
-  int64  shipped_at    = 12; // 0 if not yet shipped
-  int64  received_at   = 13; // 0 if not yet received
+  string id             = 1;  // "{source_node}/{dest_node}/{uuid_v7}"
+  string global_copy_id = 2;  // "{home_node}/{copy_uuid}" — replaces copy_id
+  string transfer_type  = 3;  // ILL | RETURN | PERMANENT
+  string source_node    = 4;
+  string dest_node      = 5;
+  string initiated_by   = 6;  // manager userId
+  string approved_by    = 7;  // manager userId who confirmed receipt
+  string status         = 8;  // PENDING | APPROVED | IN_TRANSIT | RECEIVED | REJECTED | CANCELLED
+  string notes          = 9;
+  int64  requested_at   = 10;
+  int64  approved_at    = 11; // 0 if not yet approved
+  int64  shipped_at     = 12; // 0 if not yet shipped
+  int64  received_at    = 13; // 0 if not yet received
 }
 
 message TransferList {
@@ -135,13 +137,14 @@ message CurioMetadata {
 // ─── Physical copies ────────────────────────────────────────────────────────
 
 message PhysicalCopy {
-  string id        = 1;
-  string curio_id  = 2;
-  string condition = 3; // NEW | GOOD | FAIR | POOR | LOST
-  string location  = 4;
-  string node_id   = 5;
-  string status    = 6; // AVAILABLE | ON_LOAN | REQUESTED | IN_TRANSIT
-  int64  created_at = 7;
+  string id           = 1;
+  string curio_id     = 2;
+  string condition    = 3; // NEW | GOOD | FAIR | POOR | LOST
+  string location     = 4;
+  string node_id      = 5;
+  string status       = 6; // AVAILABLE | ON_LOAN | REQUESTED | IN_TRANSIT
+  int64  created_at   = 7;
+  string home_node_id = 8; // origin node; updated only on PERMANENT transfer completion
 }
 
 message CopyList {
@@ -168,6 +171,32 @@ message PhysicalLoan {
   int64  due_date         = 6;
   int64  returned_at      = 7; // 0 if not returned
   string requesting_node  = 8;
+  // Populated by ListLoans (joined from physical_copies + curios)
+  string curio_id         = 9;
+  string curio_title      = 10;
+}
+
+message ListLoansRequest {
+  bool   active_only  = 1; // if true, only unreturned loans
+  int32  limit        = 2;
+  int32  offset       = 3;
+  string user_id      = 4; // optional: filter to a specific user
+  string user_node_id = 5; // optional: also filter by home node (for cross-node fan-out)
+}
+
+message LoanList {
+  repeated PhysicalLoan loans = 1;
+  int32 total = 2;
+}
+
+message ListLeasesRequest {
+  string user_id      = 1;
+  string user_node_id = 2; // home node fingerprint
+  bool   active_only  = 3; // if true, exclude revoked/expired
+}
+
+message DigitalLeaseList {
+  repeated DigitalLease leases = 1;
 }
 
 // ─── Holds ───────────────────────────────────────────────────────────────────
@@ -246,6 +275,7 @@ service CuriosManager {
 
   // Physical copies and loans
   rpc ListCopies(CurioId) returns (CopyList);
+  rpc ListLoans(ListLoansRequest) returns (LoanList);
   rpc CheckoutCopy(CheckoutRequest) returns (PhysicalLoan);
   rpc ReturnCopy(ReturnRequest) returns (PhysicalLoan);
   rpc PlaceHold(HoldRequest) returns (Hold);
@@ -254,8 +284,10 @@ service CuriosManager {
   // Digital assets and leasing
   rpc GetDigitalAsset(CurioId) returns (DigitalAsset);
   rpc CreateDigitalAsset(CreateDigitalAssetRequest) returns (DigitalAsset);
+  rpc GetLease(LeaseId) returns (DigitalLease);
   rpc IssueLease(LeaseRequest) returns (DigitalLease);
   rpc RevokeLease(LeaseId) returns (Empty);
+  rpc ListLeases(ListLeasesRequest) returns (DigitalLeaseList);
 
   // Physical copy transfers
   rpc RequestTransfer(TransferRequest)     returns (CopyTransfer);

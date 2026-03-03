@@ -63,6 +63,8 @@ type PeerInfo struct {
 	PublicKey     string                 `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"` // base64-encoded Ed25519 public key
 	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`                      // host:port of the peer's network-manager
 	DisplayName   string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`             // PENDING | CONNECTED (read-only; ignored on input)
+	Capabilities  []string               `protobuf:"bytes,6,rep,name=capabilities,proto3" json:"capabilities,omitempty"` // e.g. ["curios","users","ui"]
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -125,17 +127,76 @@ func (x *PeerInfo) GetDisplayName() string {
 	return ""
 }
 
+func (x *PeerInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *PeerInfo) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
+type NodeId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeId) Reset() {
+	*x = NodeId{}
+	mi := &file_proto_network_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeId) ProtoMessage() {}
+
+func (x *NodeId) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeId.ProtoReflect.Descriptor instead.
+func (*NodeId) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *NodeId) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
 type PeerAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`          // this node's ID
 	PublicKey     string                 `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"` // this node's public key (for mutual exchange)
+	Capabilities  []string               `protobuf:"bytes,3,rep,name=capabilities,proto3" json:"capabilities,omitempty"`            // capabilities this node offers
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PeerAck) Reset() {
 	*x = PeerAck{}
-	mi := &file_proto_network_proto_msgTypes[2]
+	mi := &file_proto_network_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +208,7 @@ func (x *PeerAck) String() string {
 func (*PeerAck) ProtoMessage() {}
 
 func (x *PeerAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[2]
+	mi := &file_proto_network_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +221,7 @@ func (x *PeerAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerAck.ProtoReflect.Descriptor instead.
 func (*PeerAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{2}
+	return file_proto_network_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PeerAck) GetNodeId() string {
@@ -177,6 +238,13 @@ func (x *PeerAck) GetPublicKey() string {
 	return ""
 }
 
+func (x *PeerAck) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
 type PeerList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Peers         []*PeerInfo            `protobuf:"bytes,1,rep,name=peers,proto3" json:"peers,omitempty"`
@@ -186,7 +254,7 @@ type PeerList struct {
 
 func (x *PeerList) Reset() {
 	*x = PeerList{}
-	mi := &file_proto_network_proto_msgTypes[3]
+	mi := &file_proto_network_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +266,7 @@ func (x *PeerList) String() string {
 func (*PeerList) ProtoMessage() {}
 
 func (x *PeerList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[3]
+	mi := &file_proto_network_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +279,7 @@ func (x *PeerList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerList.ProtoReflect.Descriptor instead.
 func (*PeerList) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{3}
+	return file_proto_network_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PeerList) GetPeers() []*PeerInfo {
@@ -237,7 +305,7 @@ type CurioSummary struct {
 
 func (x *CurioSummary) Reset() {
 	*x = CurioSummary{}
-	mi := &file_proto_network_proto_msgTypes[4]
+	mi := &file_proto_network_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -249,7 +317,7 @@ func (x *CurioSummary) String() string {
 func (*CurioSummary) ProtoMessage() {}
 
 func (x *CurioSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[4]
+	mi := &file_proto_network_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,7 +330,7 @@ func (x *CurioSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CurioSummary.ProtoReflect.Descriptor instead.
 func (*CurioSummary) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{4}
+	return file_proto_network_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CurioSummary) GetId() string {
@@ -332,7 +400,7 @@ type CatalogSnapshot struct {
 
 func (x *CatalogSnapshot) Reset() {
 	*x = CatalogSnapshot{}
-	mi := &file_proto_network_proto_msgTypes[5]
+	mi := &file_proto_network_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +412,7 @@ func (x *CatalogSnapshot) String() string {
 func (*CatalogSnapshot) ProtoMessage() {}
 
 func (x *CatalogSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[5]
+	mi := &file_proto_network_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +425,7 @@ func (x *CatalogSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CatalogSnapshot.ProtoReflect.Descriptor instead.
 func (*CatalogSnapshot) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{5}
+	return file_proto_network_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CatalogSnapshot) GetNodeId() string {
@@ -390,7 +458,7 @@ type SyncAck struct {
 
 func (x *SyncAck) Reset() {
 	*x = SyncAck{}
-	mi := &file_proto_network_proto_msgTypes[6]
+	mi := &file_proto_network_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -402,7 +470,7 @@ func (x *SyncAck) String() string {
 func (*SyncAck) ProtoMessage() {}
 
 func (x *SyncAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[6]
+	mi := &file_proto_network_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -415,7 +483,7 @@ func (x *SyncAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncAck.ProtoReflect.Descriptor instead.
 func (*SyncAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{6}
+	return file_proto_network_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SyncAck) GetReceived() int32 {
@@ -437,7 +505,7 @@ type NetworkSearchRequest struct {
 
 func (x *NetworkSearchRequest) Reset() {
 	*x = NetworkSearchRequest{}
-	mi := &file_proto_network_proto_msgTypes[7]
+	mi := &file_proto_network_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -449,7 +517,7 @@ func (x *NetworkSearchRequest) String() string {
 func (*NetworkSearchRequest) ProtoMessage() {}
 
 func (x *NetworkSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[7]
+	mi := &file_proto_network_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -462,7 +530,7 @@ func (x *NetworkSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkSearchRequest.ProtoReflect.Descriptor instead.
 func (*NetworkSearchRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{7}
+	return file_proto_network_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *NetworkSearchRequest) GetQuery() string {
@@ -506,7 +574,7 @@ type NetworkSearchResult struct {
 
 func (x *NetworkSearchResult) Reset() {
 	*x = NetworkSearchResult{}
-	mi := &file_proto_network_proto_msgTypes[8]
+	mi := &file_proto_network_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +586,7 @@ func (x *NetworkSearchResult) String() string {
 func (*NetworkSearchResult) ProtoMessage() {}
 
 func (x *NetworkSearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[8]
+	mi := &file_proto_network_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +599,7 @@ func (x *NetworkSearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkSearchResult.ProtoReflect.Descriptor instead.
 func (*NetworkSearchResult) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{8}
+	return file_proto_network_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *NetworkSearchResult) GetNodeId() string {
@@ -564,17 +632,18 @@ func (x *NetworkSearchResult) GetError() string {
 
 type BorrowRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	CurioId        string                 `protobuf:"bytes,1,opt,name=curio_id,json=curioId,proto3" json:"curio_id,omitempty"`
-	CopyId         string                 `protobuf:"bytes,2,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`
-	UserJwt        string                 `protobuf:"bytes,3,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"` // JWT signed by the user's home node
-	RequestingNode string                 `protobuf:"bytes,4,opt,name=requesting_node,json=requestingNode,proto3" json:"requesting_node,omitempty"`
+	CurioId        string                 `protobuf:"bytes,1,opt,name=curio_id,json=curioId,proto3" json:"curio_id,omitempty"`                      // ISO 18626: bibliographicInfo identifier
+	CopyId         string                 `protobuf:"bytes,2,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`                         // physical only; empty = auto-select available copy
+	UserJwt        string                 `protobuf:"bytes,3,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"`                      // ISO 18626: patron credential (home-node signed)
+	RequestingNode string                 `protobuf:"bytes,4,opt,name=requesting_node,json=requestingNode,proto3" json:"requesting_node,omitempty"` // ISO 18626: requestingAgencyId
+	NeedBefore     int64                  `protobuf:"varint,5,opt,name=need_before,json=needBefore,proto3" json:"need_before,omitempty"`            // ISO 18626: serviceInfo.needBefore (unix; 0 = default loan period)
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *BorrowRequest) Reset() {
 	*x = BorrowRequest{}
-	mi := &file_proto_network_proto_msgTypes[9]
+	mi := &file_proto_network_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -586,7 +655,7 @@ func (x *BorrowRequest) String() string {
 func (*BorrowRequest) ProtoMessage() {}
 
 func (x *BorrowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[9]
+	mi := &file_proto_network_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +668,7 @@ func (x *BorrowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowRequest.ProtoReflect.Descriptor instead.
 func (*BorrowRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{9}
+	return file_proto_network_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BorrowRequest) GetCurioId() string {
@@ -630,17 +699,28 @@ func (x *BorrowRequest) GetRequestingNode() string {
 	return ""
 }
 
+func (x *BorrowRequest) GetNeedBefore() int64 {
+	if x != nil {
+		return x.NeedBefore
+	}
+	return 0
+}
+
 type BorrowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	LoanId        string                 `protobuf:"bytes,1,opt,name=loan_id,json=loanId,proto3" json:"loan_id,omitempty"`
-	DueDate       int64                  `protobuf:"varint,2,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"` // unix seconds
+	LoanId        string                 `protobuf:"bytes,1,opt,name=loan_id,json=loanId,proto3" json:"loan_id,omitempty"`     // physical: PhysicalLoan.id; digital: DigitalLease.id
+	DueDate       int64                  `protobuf:"varint,2,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"` // physical: due date (unix); 0 for digital
+	CopyId        string                 `protobuf:"bytes,3,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`     // physical: checked-out copy; pass back in ReturnRequest.copy_id
+	IsDigital     bool                   `protobuf:"varint,4,opt,name=is_digital,json=isDigital,proto3" json:"is_digital,omitempty"`
+	ExpiresAt     int64                  `protobuf:"varint,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`      // digital: lease expiry (unix)
+	AccessToken   string                 `protobuf:"bytes,6,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"` // digital: LCP license ID or provider access token
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BorrowResponse) Reset() {
 	*x = BorrowResponse{}
-	mi := &file_proto_network_proto_msgTypes[10]
+	mi := &file_proto_network_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -652,7 +732,7 @@ func (x *BorrowResponse) String() string {
 func (*BorrowResponse) ProtoMessage() {}
 
 func (x *BorrowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[10]
+	mi := &file_proto_network_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,7 +745,7 @@ func (x *BorrowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowResponse.ProtoReflect.Descriptor instead.
 func (*BorrowResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{10}
+	return file_proto_network_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *BorrowResponse) GetLoanId() string {
@@ -682,17 +762,46 @@ func (x *BorrowResponse) GetDueDate() int64 {
 	return 0
 }
 
+func (x *BorrowResponse) GetCopyId() string {
+	if x != nil {
+		return x.CopyId
+	}
+	return ""
+}
+
+func (x *BorrowResponse) GetIsDigital() bool {
+	if x != nil {
+		return x.IsDigital
+	}
+	return false
+}
+
+func (x *BorrowResponse) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
+func (x *BorrowResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
 type ReturnRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	LoanId        string                 `protobuf:"bytes,1,opt,name=loan_id,json=loanId,proto3" json:"loan_id,omitempty"`
-	UserJwt       string                 `protobuf:"bytes,2,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"`
+	LoanId        string                 `protobuf:"bytes,1,opt,name=loan_id,json=loanId,proto3" json:"loan_id,omitempty"`    // ISO 18626: loan/lease identifier
+	UserJwt       string                 `protobuf:"bytes,2,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"` // ISO 18626: patron credential
+	CopyId        string                 `protobuf:"bytes,3,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`    // physical: copy from BorrowResponse; empty for digital (early return supported)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReturnRequest) Reset() {
 	*x = ReturnRequest{}
-	mi := &file_proto_network_proto_msgTypes[11]
+	mi := &file_proto_network_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -704,7 +813,7 @@ func (x *ReturnRequest) String() string {
 func (*ReturnRequest) ProtoMessage() {}
 
 func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[11]
+	mi := &file_proto_network_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -717,7 +826,7 @@ func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnRequest.ProtoReflect.Descriptor instead.
 func (*ReturnRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{11}
+	return file_proto_network_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ReturnRequest) GetLoanId() string {
@@ -734,6 +843,13 @@ func (x *ReturnRequest) GetUserJwt() string {
 	return ""
 }
 
+func (x *ReturnRequest) GetCopyId() string {
+	if x != nil {
+		return x.CopyId
+	}
+	return ""
+}
+
 type ReturnResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReturnedAt    int64                  `protobuf:"varint,1,opt,name=returned_at,json=returnedAt,proto3" json:"returned_at,omitempty"`
@@ -743,7 +859,7 @@ type ReturnResponse struct {
 
 func (x *ReturnResponse) Reset() {
 	*x = ReturnResponse{}
-	mi := &file_proto_network_proto_msgTypes[12]
+	mi := &file_proto_network_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -755,7 +871,7 @@ func (x *ReturnResponse) String() string {
 func (*ReturnResponse) ProtoMessage() {}
 
 func (x *ReturnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[12]
+	mi := &file_proto_network_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -768,7 +884,7 @@ func (x *ReturnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnResponse.ProtoReflect.Descriptor instead.
 func (*ReturnResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{12}
+	return file_proto_network_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ReturnResponse) GetReturnedAt() int64 {
@@ -794,7 +910,7 @@ type RemoteTransferRequest struct {
 
 func (x *RemoteTransferRequest) Reset() {
 	*x = RemoteTransferRequest{}
-	mi := &file_proto_network_proto_msgTypes[13]
+	mi := &file_proto_network_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -806,7 +922,7 @@ func (x *RemoteTransferRequest) String() string {
 func (*RemoteTransferRequest) ProtoMessage() {}
 
 func (x *RemoteTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[13]
+	mi := &file_proto_network_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +935,7 @@ func (x *RemoteTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteTransferRequest.ProtoReflect.Descriptor instead.
 func (*RemoteTransferRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{13}
+	return file_proto_network_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RemoteTransferRequest) GetTransferId() string {
@@ -888,7 +1004,7 @@ type RemoteTransferAck struct {
 
 func (x *RemoteTransferAck) Reset() {
 	*x = RemoteTransferAck{}
-	mi := &file_proto_network_proto_msgTypes[14]
+	mi := &file_proto_network_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +1016,7 @@ func (x *RemoteTransferAck) String() string {
 func (*RemoteTransferAck) ProtoMessage() {}
 
 func (x *RemoteTransferAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[14]
+	mi := &file_proto_network_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +1029,7 @@ func (x *RemoteTransferAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteTransferAck.ProtoReflect.Descriptor instead.
 func (*RemoteTransferAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{14}
+	return file_proto_network_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RemoteTransferAck) GetTransferId() string {
@@ -942,7 +1058,7 @@ type TransferUpdate struct {
 
 func (x *TransferUpdate) Reset() {
 	*x = TransferUpdate{}
-	mi := &file_proto_network_proto_msgTypes[15]
+	mi := &file_proto_network_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -954,7 +1070,7 @@ func (x *TransferUpdate) String() string {
 func (*TransferUpdate) ProtoMessage() {}
 
 func (x *TransferUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[15]
+	mi := &file_proto_network_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -967,7 +1083,7 @@ func (x *TransferUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferUpdate.ProtoReflect.Descriptor instead.
 func (*TransferUpdate) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{15}
+	return file_proto_network_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TransferUpdate) GetTransferId() string {
@@ -1007,7 +1123,7 @@ type UserToken struct {
 
 func (x *UserToken) Reset() {
 	*x = UserToken{}
-	mi := &file_proto_network_proto_msgTypes[16]
+	mi := &file_proto_network_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1019,7 +1135,7 @@ func (x *UserToken) String() string {
 func (*UserToken) ProtoMessage() {}
 
 func (x *UserToken) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[16]
+	mi := &file_proto_network_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +1148,7 @@ func (x *UserToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserToken.ProtoReflect.Descriptor instead.
 func (*UserToken) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{16}
+	return file_proto_network_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UserToken) GetJwt() string {
@@ -1055,7 +1171,7 @@ type VerificationResult struct {
 
 func (x *VerificationResult) Reset() {
 	*x = VerificationResult{}
-	mi := &file_proto_network_proto_msgTypes[17]
+	mi := &file_proto_network_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1183,7 @@ func (x *VerificationResult) String() string {
 func (*VerificationResult) ProtoMessage() {}
 
 func (x *VerificationResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[17]
+	mi := &file_proto_network_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1196,7 @@ func (x *VerificationResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerificationResult.ProtoReflect.Descriptor instead.
 func (*VerificationResult) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{17}
+	return file_proto_network_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *VerificationResult) GetValid() bool {
@@ -1118,22 +1234,836 @@ func (x *VerificationResult) GetError() string {
 	return ""
 }
 
+// Called by a CONNECTED peer (Node B) on the home node (Node A) to obtain a
+// short-lived, audience-scoped JWT for one of the home node's users.
+type GuestTokenRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	UserId         string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                         // user's UUID on the home node
+	RequestingNode string                 `protobuf:"bytes,2,opt,name=requesting_node,json=requestingNode,proto3" json:"requesting_node,omitempty"` // fingerprint of the node requesting the token
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GuestTokenRequest) Reset() {
+	*x = GuestTokenRequest{}
+	mi := &file_proto_network_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GuestTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GuestTokenRequest) ProtoMessage() {}
+
+func (x *GuestTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GuestTokenRequest.ProtoReflect.Descriptor instead.
+func (*GuestTokenRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GuestTokenRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GuestTokenRequest) GetRequestingNode() string {
+	if x != nil {
+		return x.RequestingNode
+	}
+	return ""
+}
+
+type GuestTokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`                                // JWT signed by the home node; aud = requesting_node
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"` // user's display name for thin local record creation
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GuestTokenResponse) Reset() {
+	*x = GuestTokenResponse{}
+	mi := &file_proto_network_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GuestTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GuestTokenResponse) ProtoMessage() {}
+
+func (x *GuestTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GuestTokenResponse.ProtoReflect.Descriptor instead.
+func (*GuestTokenResponse) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *GuestTokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *GuestTokenResponse) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+// Called by the local BFF to log in a cross-node user via their home node.
+// The network-manager dials the home node, calls IssueGuestToken, creates a
+// thin local user record, and returns a node-local session JWT.
+type AuthenticateGuestRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	UserId          string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                              // user's UUID on the home node
+	HomeNodeAddress string                 `protobuf:"bytes,2,opt,name=home_node_address,json=homeNodeAddress,proto3" json:"home_node_address,omitempty"` // gRPC address (host:port) of the home node
+	HomeNodeId      string                 `protobuf:"bytes,3,opt,name=home_node_id,json=homeNodeId,proto3" json:"home_node_id,omitempty"`                // fingerprint of the home node (used to verify response)
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AuthenticateGuestRequest) Reset() {
+	*x = AuthenticateGuestRequest{}
+	mi := &file_proto_network_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthenticateGuestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateGuestRequest) ProtoMessage() {}
+
+func (x *AuthenticateGuestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateGuestRequest.ProtoReflect.Descriptor instead.
+func (*AuthenticateGuestRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *AuthenticateGuestRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AuthenticateGuestRequest) GetHomeNodeAddress() string {
+	if x != nil {
+		return x.HomeNodeAddress
+	}
+	return ""
+}
+
+func (x *AuthenticateGuestRequest) GetHomeNodeId() string {
+	if x != nil {
+		return x.HomeNodeId
+	}
+	return ""
+}
+
+type AuthenticateGuestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"` // local session JWT (signed by this node)
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuthenticateGuestResponse) Reset() {
+	*x = AuthenticateGuestResponse{}
+	mi := &file_proto_network_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthenticateGuestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateGuestResponse) ProtoMessage() {}
+
+func (x *AuthenticateGuestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateGuestResponse.ProtoReflect.Descriptor instead.
+func (*AuthenticateGuestResponse) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AuthenticateGuestResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AuthenticateGuestResponse) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+// Fan-out query: streams one result per CONNECTED peer (same pattern as SearchNetwork).
+type UserLoansRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`               // user's UUID (on their home node)
+	UserNodeId    string                 `protobuf:"bytes,2,opt,name=user_node_id,json=userNodeId,proto3" json:"user_node_id,omitempty"` // fingerprint of the user's home node
+	ActiveOnly    bool                   `protobuf:"varint,3,opt,name=active_only,json=activeOnly,proto3" json:"active_only,omitempty"`  // if true, exclude returned/revoked records
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserLoansRequest) Reset() {
+	*x = UserLoansRequest{}
+	mi := &file_proto_network_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserLoansRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserLoansRequest) ProtoMessage() {}
+
+func (x *UserLoansRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserLoansRequest.ProtoReflect.Descriptor instead.
+func (*UserLoansRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *UserLoansRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UserLoansRequest) GetUserNodeId() string {
+	if x != nil {
+		return x.UserNodeId
+	}
+	return ""
+}
+
+func (x *UserLoansRequest) GetActiveOnly() bool {
+	if x != nil {
+		return x.ActiveOnly
+	}
+	return false
+}
+
+// Unified physical-loan + digital-lease record for the fan-out response.
+type RemoteLoan struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LoanId        string                 `protobuf:"bytes,1,opt,name=loan_id,json=loanId,proto3" json:"loan_id,omitempty"`
+	CurioId       string                 `protobuf:"bytes,2,opt,name=curio_id,json=curioId,proto3" json:"curio_id,omitempty"`
+	CurioTitle    string                 `protobuf:"bytes,3,opt,name=curio_title,json=curioTitle,proto3" json:"curio_title,omitempty"`
+	IsDigital     bool                   `protobuf:"varint,4,opt,name=is_digital,json=isDigital,proto3" json:"is_digital,omitempty"`
+	IssuedAt      int64                  `protobuf:"varint,5,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	DueDate       int64                  `protobuf:"varint,6,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`       // physical: when it must be returned (0 for digital)
+	ExpiresAt     int64                  `protobuf:"varint,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // digital: when access expires (0 for physical)
+	Closed        bool                   `protobuf:"varint,8,opt,name=closed,proto3" json:"closed,omitempty"`                        // true if returned or revoked
+	NodeId        string                 `protobuf:"bytes,9,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`           // node that owns the item
+	NodeName      string                 `protobuf:"bytes,10,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoteLoan) Reset() {
+	*x = RemoteLoan{}
+	mi := &file_proto_network_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoteLoan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoteLoan) ProtoMessage() {}
+
+func (x *RemoteLoan) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoteLoan.ProtoReflect.Descriptor instead.
+func (*RemoteLoan) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RemoteLoan) GetLoanId() string {
+	if x != nil {
+		return x.LoanId
+	}
+	return ""
+}
+
+func (x *RemoteLoan) GetCurioId() string {
+	if x != nil {
+		return x.CurioId
+	}
+	return ""
+}
+
+func (x *RemoteLoan) GetCurioTitle() string {
+	if x != nil {
+		return x.CurioTitle
+	}
+	return ""
+}
+
+func (x *RemoteLoan) GetIsDigital() bool {
+	if x != nil {
+		return x.IsDigital
+	}
+	return false
+}
+
+func (x *RemoteLoan) GetIssuedAt() int64 {
+	if x != nil {
+		return x.IssuedAt
+	}
+	return 0
+}
+
+func (x *RemoteLoan) GetDueDate() int64 {
+	if x != nil {
+		return x.DueDate
+	}
+	return 0
+}
+
+func (x *RemoteLoan) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
+func (x *RemoteLoan) GetClosed() bool {
+	if x != nil {
+		return x.Closed
+	}
+	return false
+}
+
+func (x *RemoteLoan) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *RemoteLoan) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
+	}
+	return ""
+}
+
+type UserLoansResult struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	NodeName      string                 `protobuf:"bytes,2,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	Loans         []*RemoteLoan          `protobuf:"bytes,3,rep,name=loans,proto3" json:"loans,omitempty"`
+	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"` // non-empty if this peer failed to respond
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserLoansResult) Reset() {
+	*x = UserLoansResult{}
+	mi := &file_proto_network_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserLoansResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserLoansResult) ProtoMessage() {}
+
+func (x *UserLoansResult) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserLoansResult.ProtoReflect.Descriptor instead.
+func (*UserLoansResult) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *UserLoansResult) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *UserLoansResult) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
+	}
+	return ""
+}
+
+func (x *UserLoansResult) GetLoans() []*RemoteLoan {
+	if x != nil {
+		return x.Loans
+	}
+	return nil
+}
+
+func (x *UserLoansResult) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type DigitalLeaseRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CurioId        string                 `protobuf:"bytes,1,opt,name=curio_id,json=curioId,proto3" json:"curio_id,omitempty"`
+	UserJwt        string                 `protobuf:"bytes,2,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"`                      // JWT signed by the user's home node; aud = this node
+	RequestingNode string                 `protobuf:"bytes,3,opt,name=requesting_node,json=requestingNode,proto3" json:"requesting_node,omitempty"` // home node fingerprint (must match JWT iss)
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *DigitalLeaseRequest) Reset() {
+	*x = DigitalLeaseRequest{}
+	mi := &file_proto_network_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DigitalLeaseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DigitalLeaseRequest) ProtoMessage() {}
+
+func (x *DigitalLeaseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DigitalLeaseRequest.ProtoReflect.Descriptor instead.
+func (*DigitalLeaseRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *DigitalLeaseRequest) GetCurioId() string {
+	if x != nil {
+		return x.CurioId
+	}
+	return ""
+}
+
+func (x *DigitalLeaseRequest) GetUserJwt() string {
+	if x != nil {
+		return x.UserJwt
+	}
+	return ""
+}
+
+func (x *DigitalLeaseRequest) GetRequestingNode() string {
+	if x != nil {
+		return x.RequestingNode
+	}
+	return ""
+}
+
+type DigitalLeaseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LeaseId       string                 `protobuf:"bytes,1,opt,name=lease_id,json=leaseId,proto3" json:"lease_id,omitempty"`
+	AccessToken   string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	LicenseUrl    string                 `protobuf:"bytes,3,opt,name=license_url,json=licenseUrl,proto3" json:"license_url,omitempty"` // LSD URL when LCP is enabled
+	ExpiresAt     int64                  `protobuf:"varint,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DigitalLeaseResponse) Reset() {
+	*x = DigitalLeaseResponse{}
+	mi := &file_proto_network_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DigitalLeaseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DigitalLeaseResponse) ProtoMessage() {}
+
+func (x *DigitalLeaseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DigitalLeaseResponse.ProtoReflect.Descriptor instead.
+func (*DigitalLeaseResponse) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DigitalLeaseResponse) GetLeaseId() string {
+	if x != nil {
+		return x.LeaseId
+	}
+	return ""
+}
+
+func (x *DigitalLeaseResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *DigitalLeaseResponse) GetLicenseUrl() string {
+	if x != nil {
+		return x.LicenseUrl
+	}
+	return ""
+}
+
+func (x *DigitalLeaseResponse) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
+type LeaseRef struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LeaseId       string                 `protobuf:"bytes,1,opt,name=lease_id,json=leaseId,proto3" json:"lease_id,omitempty"`
+	UserJwt       string                 `protobuf:"bytes,2,opt,name=user_jwt,json=userJwt,proto3" json:"user_jwt,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaseRef) Reset() {
+	*x = LeaseRef{}
+	mi := &file_proto_network_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaseRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaseRef) ProtoMessage() {}
+
+func (x *LeaseRef) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaseRef.ProtoReflect.Descriptor instead.
+func (*LeaseRef) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *LeaseRef) GetLeaseId() string {
+	if x != nil {
+		return x.LeaseId
+	}
+	return ""
+}
+
+func (x *LeaseRef) GetUserJwt() string {
+	if x != nil {
+		return x.UserJwt
+	}
+	return ""
+}
+
+// ForwardTransferRequest asks the local network-manager to call InitiateRemoteTransfer
+// on the specified peer. The network-manager does not interpret the transfer data —
+// it only routes to the peer and checks the "curios" capability.
+type ForwardTransferRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TargetNodeId  string                 `protobuf:"bytes,1,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"` // peer to contact (source node for ILL)
+	Request       *RemoteTransferRequest `protobuf:"bytes,2,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForwardTransferRequest) Reset() {
+	*x = ForwardTransferRequest{}
+	mi := &file_proto_network_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForwardTransferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForwardTransferRequest) ProtoMessage() {}
+
+func (x *ForwardTransferRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForwardTransferRequest.ProtoReflect.Descriptor instead.
+func (*ForwardTransferRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ForwardTransferRequest) GetTargetNodeId() string {
+	if x != nil {
+		return x.TargetNodeId
+	}
+	return ""
+}
+
+func (x *ForwardTransferRequest) GetRequest() *RemoteTransferRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+type ForwardTransferAck struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	Accepted      bool                   `protobuf:"varint,2,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForwardTransferAck) Reset() {
+	*x = ForwardTransferAck{}
+	mi := &file_proto_network_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForwardTransferAck) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForwardTransferAck) ProtoMessage() {}
+
+func (x *ForwardTransferAck) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForwardTransferAck.ProtoReflect.Descriptor instead.
+func (*ForwardTransferAck) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ForwardTransferAck) GetTransferId() string {
+	if x != nil {
+		return x.TransferId
+	}
+	return ""
+}
+
+func (x *ForwardTransferAck) GetAccepted() bool {
+	if x != nil {
+		return x.Accepted
+	}
+	return false
+}
+
+// RelayTransferUpdateRequest asks the local network-manager to call NotifyTransferUpdate
+// on the specified peer. Curios-manager sets target_node_id from the transfer record's
+// source_node or dest_node. Network-manager checks "curios" capability before routing.
+type RelayTransferUpdateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TargetNodeId  string                 `protobuf:"bytes,1,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`
+	Update        *TransferUpdate        `protobuf:"bytes,2,opt,name=update,proto3" json:"update,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RelayTransferUpdateRequest) Reset() {
+	*x = RelayTransferUpdateRequest{}
+	mi := &file_proto_network_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RelayTransferUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RelayTransferUpdateRequest) ProtoMessage() {}
+
+func (x *RelayTransferUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RelayTransferUpdateRequest.ProtoReflect.Descriptor instead.
+func (*RelayTransferUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RelayTransferUpdateRequest) GetTargetNodeId() string {
+	if x != nil {
+		return x.TargetNodeId
+	}
+	return ""
+}
+
+func (x *RelayTransferUpdateRequest) GetUpdate() *TransferUpdate {
+	if x != nil {
+		return x.Update
+	}
+	return nil
+}
+
 var File_proto_network_proto protoreflect.FileDescriptor
 
 const file_proto_network_proto_rawDesc = "" +
 	"\n" +
 	"\x13proto/network.proto\x12\anetwork\"\a\n" +
-	"\x05Empty\"\x7f\n" +
+	"\x05Empty\"\xbb\x01\n" +
 	"\bPeerInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12!\n" +
-	"\fdisplay_name\x18\x04 \x01(\tR\vdisplayName\"A\n" +
+	"\fdisplay_name\x18\x04 \x01(\tR\vdisplayName\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\"\n" +
+	"\fcapabilities\x18\x06 \x03(\tR\fcapabilities\"!\n" +
+	"\x06NodeId\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"e\n" +
 	"\aPeerAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1d\n" +
 	"\n" +
-	"public_key\x18\x02 \x01(\tR\tpublicKey\"3\n" +
+	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\"\n" +
+	"\fcapabilities\x18\x03 \x03(\tR\fcapabilities\"3\n" +
 	"\bPeerList\x12'\n" +
 	"\x05peers\x18\x01 \x03(\v2\x11.network.PeerInfoR\x05peers\"\xdc\x01\n" +
 	"\fCurioSummary\x12\x0e\n" +
@@ -1164,18 +2094,27 @@ const file_proto_network_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1b\n" +
 	"\tnode_name\x18\x02 \x01(\tR\bnodeName\x12-\n" +
 	"\x06curios\x18\x03 \x03(\v2\x15.network.CurioSummaryR\x06curios\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"\x87\x01\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"\xa8\x01\n" +
 	"\rBorrowRequest\x12\x19\n" +
 	"\bcurio_id\x18\x01 \x01(\tR\acurioId\x12\x17\n" +
 	"\acopy_id\x18\x02 \x01(\tR\x06copyId\x12\x19\n" +
 	"\buser_jwt\x18\x03 \x01(\tR\auserJwt\x12'\n" +
-	"\x0frequesting_node\x18\x04 \x01(\tR\x0erequestingNode\"D\n" +
+	"\x0frequesting_node\x18\x04 \x01(\tR\x0erequestingNode\x12\x1f\n" +
+	"\vneed_before\x18\x05 \x01(\x03R\n" +
+	"needBefore\"\xbe\x01\n" +
 	"\x0eBorrowResponse\x12\x17\n" +
 	"\aloan_id\x18\x01 \x01(\tR\x06loanId\x12\x19\n" +
-	"\bdue_date\x18\x02 \x01(\x03R\adueDate\"C\n" +
+	"\bdue_date\x18\x02 \x01(\x03R\adueDate\x12\x17\n" +
+	"\acopy_id\x18\x03 \x01(\tR\x06copyId\x12\x1d\n" +
+	"\n" +
+	"is_digital\x18\x04 \x01(\bR\tisDigital\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\x03R\texpiresAt\x12!\n" +
+	"\faccess_token\x18\x06 \x01(\tR\vaccessToken\"\\\n" +
 	"\rReturnRequest\x12\x17\n" +
 	"\aloan_id\x18\x01 \x01(\tR\x06loanId\x12\x19\n" +
-	"\buser_jwt\x18\x02 \x01(\tR\auserJwt\"1\n" +
+	"\buser_jwt\x18\x02 \x01(\tR\auserJwt\x12\x17\n" +
+	"\acopy_id\x18\x03 \x01(\tR\x06copyId\"1\n" +
 	"\x0eReturnResponse\x12\x1f\n" +
 	"\vreturned_at\x18\x01 \x01(\x03R\n" +
 	"returnedAt\"\x88\x02\n" +
@@ -1208,18 +2147,95 @@ const file_proto_network_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
 	"\thome_node\x18\x03 \x01(\tR\bhomeNode\x12\x12\n" +
 	"\x04role\x18\x04 \x01(\tR\x04role\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error2\xd9\x04\n" +
-	"\x0eNetworkManager\x123\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\"U\n" +
+	"\x11GuestTokenRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12'\n" +
+	"\x0frequesting_node\x18\x02 \x01(\tR\x0erequestingNode\"M\n" +
+	"\x12GuestTokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"\x81\x01\n" +
+	"\x18AuthenticateGuestRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12*\n" +
+	"\x11home_node_address\x18\x02 \x01(\tR\x0fhomeNodeAddress\x12 \n" +
+	"\fhome_node_id\x18\x03 \x01(\tR\n" +
+	"homeNodeId\"T\n" +
+	"\x19AuthenticateGuestResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"n\n" +
+	"\x10UserLoansRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\fuser_node_id\x18\x02 \x01(\tR\n" +
+	"userNodeId\x12\x1f\n" +
+	"\vactive_only\x18\x03 \x01(\bR\n" +
+	"activeOnly\"\xa5\x02\n" +
+	"\n" +
+	"RemoteLoan\x12\x17\n" +
+	"\aloan_id\x18\x01 \x01(\tR\x06loanId\x12\x19\n" +
+	"\bcurio_id\x18\x02 \x01(\tR\acurioId\x12\x1f\n" +
+	"\vcurio_title\x18\x03 \x01(\tR\n" +
+	"curioTitle\x12\x1d\n" +
+	"\n" +
+	"is_digital\x18\x04 \x01(\bR\tisDigital\x12\x1b\n" +
+	"\tissued_at\x18\x05 \x01(\x03R\bissuedAt\x12\x19\n" +
+	"\bdue_date\x18\x06 \x01(\x03R\adueDate\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\x03R\texpiresAt\x12\x16\n" +
+	"\x06closed\x18\b \x01(\bR\x06closed\x12\x17\n" +
+	"\anode_id\x18\t \x01(\tR\x06nodeId\x12\x1b\n" +
+	"\tnode_name\x18\n" +
+	" \x01(\tR\bnodeName\"\x88\x01\n" +
+	"\x0fUserLoansResult\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1b\n" +
+	"\tnode_name\x18\x02 \x01(\tR\bnodeName\x12)\n" +
+	"\x05loans\x18\x03 \x03(\v2\x13.network.RemoteLoanR\x05loans\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"t\n" +
+	"\x13DigitalLeaseRequest\x12\x19\n" +
+	"\bcurio_id\x18\x01 \x01(\tR\acurioId\x12\x19\n" +
+	"\buser_jwt\x18\x02 \x01(\tR\auserJwt\x12'\n" +
+	"\x0frequesting_node\x18\x03 \x01(\tR\x0erequestingNode\"\x94\x01\n" +
+	"\x14DigitalLeaseResponse\x12\x19\n" +
+	"\blease_id\x18\x01 \x01(\tR\aleaseId\x12!\n" +
+	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1f\n" +
+	"\vlicense_url\x18\x03 \x01(\tR\n" +
+	"licenseUrl\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x04 \x01(\x03R\texpiresAt\"@\n" +
+	"\bLeaseRef\x12\x19\n" +
+	"\blease_id\x18\x01 \x01(\tR\aleaseId\x12\x19\n" +
+	"\buser_jwt\x18\x02 \x01(\tR\auserJwt\"x\n" +
+	"\x16ForwardTransferRequest\x12$\n" +
+	"\x0etarget_node_id\x18\x01 \x01(\tR\ftargetNodeId\x128\n" +
+	"\arequest\x18\x02 \x01(\v2\x1e.network.RemoteTransferRequestR\arequest\"Q\n" +
+	"\x12ForwardTransferAck\x12\x1f\n" +
+	"\vtransfer_id\x18\x01 \x01(\tR\n" +
+	"transferId\x12\x1a\n" +
+	"\baccepted\x18\x02 \x01(\bR\baccepted\"s\n" +
+	"\x1aRelayTransferUpdateRequest\x12$\n" +
+	"\x0etarget_node_id\x18\x01 \x01(\tR\ftargetNodeId\x12/\n" +
+	"\x06update\x18\x02 \x01(\v2\x17.network.TransferUpdateR\x06update2\xd5\n" +
+	"\n" +
+	"\x0eNetworkManager\x12/\n" +
+	"\vGetNodeInfo\x12\x0e.network.Empty\x1a\x10.network.PeerAck\x123\n" +
 	"\fRegisterPeer\x12\x11.network.PeerInfo\x1a\x10.network.PeerAck\x12.\n" +
-	"\tListPeers\x12\x0e.network.Empty\x1a\x11.network.PeerList\x12N\n" +
-	"\rSearchNetwork\x12\x1d.network.NetworkSearchRequest\x1a\x1c.network.NetworkSearchResult0\x01\x12:\n" +
+	"\tListPeers\x12\x0e.network.Empty\x1a\x11.network.PeerList\x122\n" +
+	"\vConnectPeer\x12\x11.network.PeerInfo\x1a\x10.network.PeerAck\x12.\n" +
+	"\vApprovePeer\x12\x0f.network.NodeId\x1a\x0e.network.Empty\x12N\n" +
+	"\rSearchNetwork\x12\x1d.network.NetworkSearchRequest\x1a\x1c.network.NetworkSearchResult0\x01\x12L\n" +
+	"\rSearchCatalog\x12\x1d.network.NetworkSearchRequest\x1a\x1c.network.NetworkSearchResult\x12:\n" +
 	"\fShareCatalog\x12\x18.network.CatalogSnapshot\x1a\x10.network.SyncAck\x12@\n" +
 	"\rRequestBorrow\x12\x16.network.BorrowRequest\x1a\x17.network.BorrowResponse\x12>\n" +
 	"\vReturnCurio\x12\x16.network.ReturnRequest\x1a\x17.network.ReturnResponse\x12=\n" +
 	"\n" +
-	"VerifyUser\x12\x12.network.UserToken\x1a\x1b.network.VerificationResult\x12T\n" +
+	"VerifyUser\x12\x12.network.UserToken\x1a\x1b.network.VerificationResult\x12J\n" +
+	"\x0fIssueGuestToken\x12\x1a.network.GuestTokenRequest\x1a\x1b.network.GuestTokenResponse\x12Z\n" +
+	"\x11AuthenticateGuest\x12!.network.AuthenticateGuestRequest\x1a\".network.AuthenticateGuestResponse\x12E\n" +
+	"\fGetUserLoans\x12\x19.network.UserLoansRequest\x1a\x18.network.UserLoansResult0\x01\x12R\n" +
+	"\x13RequestDigitalLease\x12\x1c.network.DigitalLeaseRequest\x1a\x1d.network.DigitalLeaseResponse\x127\n" +
+	"\x12RevokeDigitalLease\x12\x11.network.LeaseRef\x1a\x0e.network.Empty\x12T\n" +
 	"\x16InitiateRemoteTransfer\x12\x1e.network.RemoteTransferRequest\x1a\x1a.network.RemoteTransferAck\x12?\n" +
-	"\x14NotifyTransferUpdate\x12\x17.network.TransferUpdate\x1a\x0e.network.EmptyB\"Z tiny-ils/gen/networkpb;networkpbb\x06proto3"
+	"\x14NotifyTransferUpdate\x12\x17.network.TransferUpdate\x1a\x0e.network.Empty\x12O\n" +
+	"\x0fForwardTransfer\x12\x1f.network.ForwardTransferRequest\x1a\x1b.network.ForwardTransferAck\x12J\n" +
+	"\x13RelayTransferUpdate\x12#.network.RelayTransferUpdateRequest\x1a\x0e.network.EmptyB\"Z tiny-ils/gen/networkpb;networkpbb\x06proto3"
 
 var (
 	file_proto_network_proto_rawDescOnce sync.Once
@@ -1233,54 +2249,93 @@ func file_proto_network_proto_rawDescGZIP() []byte {
 	return file_proto_network_proto_rawDescData
 }
 
-var file_proto_network_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_proto_network_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_proto_network_proto_goTypes = []any{
-	(*Empty)(nil),                 // 0: network.Empty
-	(*PeerInfo)(nil),              // 1: network.PeerInfo
-	(*PeerAck)(nil),               // 2: network.PeerAck
-	(*PeerList)(nil),              // 3: network.PeerList
-	(*CurioSummary)(nil),          // 4: network.CurioSummary
-	(*CatalogSnapshot)(nil),       // 5: network.CatalogSnapshot
-	(*SyncAck)(nil),               // 6: network.SyncAck
-	(*NetworkSearchRequest)(nil),  // 7: network.NetworkSearchRequest
-	(*NetworkSearchResult)(nil),   // 8: network.NetworkSearchResult
-	(*BorrowRequest)(nil),         // 9: network.BorrowRequest
-	(*BorrowResponse)(nil),        // 10: network.BorrowResponse
-	(*ReturnRequest)(nil),         // 11: network.ReturnRequest
-	(*ReturnResponse)(nil),        // 12: network.ReturnResponse
-	(*RemoteTransferRequest)(nil), // 13: network.RemoteTransferRequest
-	(*RemoteTransferAck)(nil),     // 14: network.RemoteTransferAck
-	(*TransferUpdate)(nil),        // 15: network.TransferUpdate
-	(*UserToken)(nil),             // 16: network.UserToken
-	(*VerificationResult)(nil),    // 17: network.VerificationResult
+	(*Empty)(nil),                      // 0: network.Empty
+	(*PeerInfo)(nil),                   // 1: network.PeerInfo
+	(*NodeId)(nil),                     // 2: network.NodeId
+	(*PeerAck)(nil),                    // 3: network.PeerAck
+	(*PeerList)(nil),                   // 4: network.PeerList
+	(*CurioSummary)(nil),               // 5: network.CurioSummary
+	(*CatalogSnapshot)(nil),            // 6: network.CatalogSnapshot
+	(*SyncAck)(nil),                    // 7: network.SyncAck
+	(*NetworkSearchRequest)(nil),       // 8: network.NetworkSearchRequest
+	(*NetworkSearchResult)(nil),        // 9: network.NetworkSearchResult
+	(*BorrowRequest)(nil),              // 10: network.BorrowRequest
+	(*BorrowResponse)(nil),             // 11: network.BorrowResponse
+	(*ReturnRequest)(nil),              // 12: network.ReturnRequest
+	(*ReturnResponse)(nil),             // 13: network.ReturnResponse
+	(*RemoteTransferRequest)(nil),      // 14: network.RemoteTransferRequest
+	(*RemoteTransferAck)(nil),          // 15: network.RemoteTransferAck
+	(*TransferUpdate)(nil),             // 16: network.TransferUpdate
+	(*UserToken)(nil),                  // 17: network.UserToken
+	(*VerificationResult)(nil),         // 18: network.VerificationResult
+	(*GuestTokenRequest)(nil),          // 19: network.GuestTokenRequest
+	(*GuestTokenResponse)(nil),         // 20: network.GuestTokenResponse
+	(*AuthenticateGuestRequest)(nil),   // 21: network.AuthenticateGuestRequest
+	(*AuthenticateGuestResponse)(nil),  // 22: network.AuthenticateGuestResponse
+	(*UserLoansRequest)(nil),           // 23: network.UserLoansRequest
+	(*RemoteLoan)(nil),                 // 24: network.RemoteLoan
+	(*UserLoansResult)(nil),            // 25: network.UserLoansResult
+	(*DigitalLeaseRequest)(nil),        // 26: network.DigitalLeaseRequest
+	(*DigitalLeaseResponse)(nil),       // 27: network.DigitalLeaseResponse
+	(*LeaseRef)(nil),                   // 28: network.LeaseRef
+	(*ForwardTransferRequest)(nil),     // 29: network.ForwardTransferRequest
+	(*ForwardTransferAck)(nil),         // 30: network.ForwardTransferAck
+	(*RelayTransferUpdateRequest)(nil), // 31: network.RelayTransferUpdateRequest
 }
 var file_proto_network_proto_depIdxs = []int32{
 	1,  // 0: network.PeerList.peers:type_name -> network.PeerInfo
-	4,  // 1: network.CatalogSnapshot.curios:type_name -> network.CurioSummary
-	4,  // 2: network.NetworkSearchResult.curios:type_name -> network.CurioSummary
-	1,  // 3: network.NetworkManager.RegisterPeer:input_type -> network.PeerInfo
-	0,  // 4: network.NetworkManager.ListPeers:input_type -> network.Empty
-	7,  // 5: network.NetworkManager.SearchNetwork:input_type -> network.NetworkSearchRequest
-	5,  // 6: network.NetworkManager.ShareCatalog:input_type -> network.CatalogSnapshot
-	9,  // 7: network.NetworkManager.RequestBorrow:input_type -> network.BorrowRequest
-	11, // 8: network.NetworkManager.ReturnCurio:input_type -> network.ReturnRequest
-	16, // 9: network.NetworkManager.VerifyUser:input_type -> network.UserToken
-	13, // 10: network.NetworkManager.InitiateRemoteTransfer:input_type -> network.RemoteTransferRequest
-	15, // 11: network.NetworkManager.NotifyTransferUpdate:input_type -> network.TransferUpdate
-	2,  // 12: network.NetworkManager.RegisterPeer:output_type -> network.PeerAck
-	3,  // 13: network.NetworkManager.ListPeers:output_type -> network.PeerList
-	8,  // 14: network.NetworkManager.SearchNetwork:output_type -> network.NetworkSearchResult
-	6,  // 15: network.NetworkManager.ShareCatalog:output_type -> network.SyncAck
-	10, // 16: network.NetworkManager.RequestBorrow:output_type -> network.BorrowResponse
-	12, // 17: network.NetworkManager.ReturnCurio:output_type -> network.ReturnResponse
-	17, // 18: network.NetworkManager.VerifyUser:output_type -> network.VerificationResult
-	14, // 19: network.NetworkManager.InitiateRemoteTransfer:output_type -> network.RemoteTransferAck
-	0,  // 20: network.NetworkManager.NotifyTransferUpdate:output_type -> network.Empty
-	12, // [12:21] is the sub-list for method output_type
-	3,  // [3:12] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	5,  // 1: network.CatalogSnapshot.curios:type_name -> network.CurioSummary
+	5,  // 2: network.NetworkSearchResult.curios:type_name -> network.CurioSummary
+	24, // 3: network.UserLoansResult.loans:type_name -> network.RemoteLoan
+	14, // 4: network.ForwardTransferRequest.request:type_name -> network.RemoteTransferRequest
+	16, // 5: network.RelayTransferUpdateRequest.update:type_name -> network.TransferUpdate
+	0,  // 6: network.NetworkManager.GetNodeInfo:input_type -> network.Empty
+	1,  // 7: network.NetworkManager.RegisterPeer:input_type -> network.PeerInfo
+	0,  // 8: network.NetworkManager.ListPeers:input_type -> network.Empty
+	1,  // 9: network.NetworkManager.ConnectPeer:input_type -> network.PeerInfo
+	2,  // 10: network.NetworkManager.ApprovePeer:input_type -> network.NodeId
+	8,  // 11: network.NetworkManager.SearchNetwork:input_type -> network.NetworkSearchRequest
+	8,  // 12: network.NetworkManager.SearchCatalog:input_type -> network.NetworkSearchRequest
+	6,  // 13: network.NetworkManager.ShareCatalog:input_type -> network.CatalogSnapshot
+	10, // 14: network.NetworkManager.RequestBorrow:input_type -> network.BorrowRequest
+	12, // 15: network.NetworkManager.ReturnCurio:input_type -> network.ReturnRequest
+	17, // 16: network.NetworkManager.VerifyUser:input_type -> network.UserToken
+	19, // 17: network.NetworkManager.IssueGuestToken:input_type -> network.GuestTokenRequest
+	21, // 18: network.NetworkManager.AuthenticateGuest:input_type -> network.AuthenticateGuestRequest
+	23, // 19: network.NetworkManager.GetUserLoans:input_type -> network.UserLoansRequest
+	26, // 20: network.NetworkManager.RequestDigitalLease:input_type -> network.DigitalLeaseRequest
+	28, // 21: network.NetworkManager.RevokeDigitalLease:input_type -> network.LeaseRef
+	14, // 22: network.NetworkManager.InitiateRemoteTransfer:input_type -> network.RemoteTransferRequest
+	16, // 23: network.NetworkManager.NotifyTransferUpdate:input_type -> network.TransferUpdate
+	29, // 24: network.NetworkManager.ForwardTransfer:input_type -> network.ForwardTransferRequest
+	31, // 25: network.NetworkManager.RelayTransferUpdate:input_type -> network.RelayTransferUpdateRequest
+	3,  // 26: network.NetworkManager.GetNodeInfo:output_type -> network.PeerAck
+	3,  // 27: network.NetworkManager.RegisterPeer:output_type -> network.PeerAck
+	4,  // 28: network.NetworkManager.ListPeers:output_type -> network.PeerList
+	3,  // 29: network.NetworkManager.ConnectPeer:output_type -> network.PeerAck
+	0,  // 30: network.NetworkManager.ApprovePeer:output_type -> network.Empty
+	9,  // 31: network.NetworkManager.SearchNetwork:output_type -> network.NetworkSearchResult
+	9,  // 32: network.NetworkManager.SearchCatalog:output_type -> network.NetworkSearchResult
+	7,  // 33: network.NetworkManager.ShareCatalog:output_type -> network.SyncAck
+	11, // 34: network.NetworkManager.RequestBorrow:output_type -> network.BorrowResponse
+	13, // 35: network.NetworkManager.ReturnCurio:output_type -> network.ReturnResponse
+	18, // 36: network.NetworkManager.VerifyUser:output_type -> network.VerificationResult
+	20, // 37: network.NetworkManager.IssueGuestToken:output_type -> network.GuestTokenResponse
+	22, // 38: network.NetworkManager.AuthenticateGuest:output_type -> network.AuthenticateGuestResponse
+	25, // 39: network.NetworkManager.GetUserLoans:output_type -> network.UserLoansResult
+	27, // 40: network.NetworkManager.RequestDigitalLease:output_type -> network.DigitalLeaseResponse
+	0,  // 41: network.NetworkManager.RevokeDigitalLease:output_type -> network.Empty
+	15, // 42: network.NetworkManager.InitiateRemoteTransfer:output_type -> network.RemoteTransferAck
+	0,  // 43: network.NetworkManager.NotifyTransferUpdate:output_type -> network.Empty
+	30, // 44: network.NetworkManager.ForwardTransfer:output_type -> network.ForwardTransferAck
+	0,  // 45: network.NetworkManager.RelayTransferUpdate:output_type -> network.Empty
+	26, // [26:46] is the sub-list for method output_type
+	6,  // [6:26] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_proto_network_proto_init() }
@@ -1294,7 +2349,7 @@ func file_proto_network_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_network_proto_rawDesc), len(file_proto_network_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

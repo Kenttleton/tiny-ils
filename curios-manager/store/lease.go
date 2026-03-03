@@ -105,6 +105,33 @@ func (s *LeaseStore) RevokeLease(ctx context.Context, leaseID uuid.UUID) error {
 	return err
 }
 
+// ListLeases returns digital leases for a specific user (identified by home node + user ID).
+func (s *LeaseStore) ListLeases(ctx context.Context, userID uuid.UUID, userNodeID string, activeOnly bool) ([]*models.DigitalLease, error) {
+	q := `SELECT id, asset_id, user_id, user_node_id, access_token, issued_at, expires_at, revoked
+	      FROM digital_leases
+	      WHERE user_id = $1 AND user_node_id = $2`
+	if activeOnly {
+		q += " AND revoked = false AND expires_at > NOW()"
+	}
+	q += " ORDER BY issued_at DESC"
+
+	rows, err := s.db.Query(ctx, q, userID, userNodeID)
+	if err != nil {
+		return nil, fmt.Errorf("list leases: %w", err)
+	}
+	defer rows.Close()
+
+	var leases []*models.DigitalLease
+	for rows.Next() {
+		l := &models.DigitalLease{}
+		if err := rows.Scan(&l.ID, &l.AssetID, &l.UserID, &l.UserNodeID, &l.AccessToken, &l.IssuedAt, &l.ExpiresAt, &l.Revoked); err != nil {
+			return nil, err
+		}
+		leases = append(leases, l)
+	}
+	return leases, rows.Err()
+}
+
 // GetLease returns a single lease by ID.
 func (s *LeaseStore) GetLease(ctx context.Context, leaseID uuid.UUID) (*models.DigitalLease, error) {
 	l := &models.DigitalLease{}

@@ -39,6 +39,76 @@ func (s *LoanStore) ListCopies(ctx context.Context, curioID uuid.UUID) ([]*model
 	return copies, rows.Err()
 }
 
+// LoanDetail is a PhysicalLoan enriched with curio info from a joined query.
+type LoanDetail struct {
+	models.PhysicalLoan
+	CurioID    uuid.UUID
+	CurioTitle string
+}
+
+func (s *LoanStore) ListLoans(ctx context.Context, activeOnly bool, userID *uuid.UUID, userNodeID string, limit, offset int) ([]*LoanDetail, int, error) {
+	// Build a dynamic but parameterized query.
+	var extraWhere string
+	var extraArgs []any
+
+	if activeOnly {
+		extraWhere += " AND l.returned_at IS NULL"
+	}
+	if userID != nil {
+		extraWhere += fmt.Sprintf(" AND l.user_id = $%d", len(extraArgs)+1)
+		extraArgs = append(extraArgs, *userID)
+	}
+	if userNodeID != "" {
+		extraWhere += fmt.Sprintf(" AND l.user_node_id = $%d", len(extraArgs)+1)
+		extraArgs = append(extraArgs, userNodeID)
+	}
+
+	var total int
+	if err := s.db.QueryRow(ctx,
+		fmt.Sprintf("SELECT COUNT(*) FROM physical_loans l WHERE true%s", extraWhere),
+		extraArgs...,
+	).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count loans: %w", err)
+	}
+
+	// limit and offset come after any extra filter args
+	limitArg := len(extraArgs) + 1
+	offsetArg := len(extraArgs) + 2
+	mainArgs := append(extraArgs, limit, offset) //nolint:gocritic
+
+	rows, err := s.db.Query(ctx,
+		fmt.Sprintf(`
+			SELECT l.id, l.copy_id, l.user_id, l.user_node_id,
+			       l.checked_out, l.due_date, l.returned_at, l.requesting_node,
+			       c.curio_id, q.title
+			FROM physical_loans l
+			JOIN physical_copies c ON c.id = l.copy_id
+			JOIN curios q ON q.id = c.curio_id
+			WHERE true%s
+			ORDER BY l.checked_out DESC
+			LIMIT $%d OFFSET $%d`, extraWhere, limitArg, offsetArg),
+		mainArgs...,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list loans: %w", err)
+	}
+	defer rows.Close()
+
+	var loans []*LoanDetail
+	for rows.Next() {
+		d := &LoanDetail{}
+		if err := rows.Scan(
+			&d.ID, &d.CopyID, &d.UserID, &d.UserNodeID,
+			&d.CheckedOut, &d.DueDate, &d.ReturnedAt, &d.RequestingNode,
+			&d.CurioID, &d.CurioTitle,
+		); err != nil {
+			return nil, 0, err
+		}
+		loans = append(loans, d)
+	}
+	return loans, total, rows.Err()
+}
+
 func (s *LoanStore) Checkout(ctx context.Context, copyID, userID uuid.UUID, userNodeID string, dueDate time.Time, requestingNode string) (*models.PhysicalLoan, error) {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {

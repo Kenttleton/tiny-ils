@@ -31,6 +31,13 @@ type NodeClaim struct {
 	GrantedAt time.Time `json:"grantedAt"`
 }
 
+// UserWithRole is a User enriched with the user's role on a specific node.
+// Role is empty string if the user has no claim on that node.
+type UserWithRole struct {
+	User
+	Role string // e.g. "USER" | "MANAGER"; empty if no claim
+}
+
 // JWTClaim is the node-scoped claim embedded in issued JWTs.
 type JWTClaim struct {
 	Node string `json:"node"`

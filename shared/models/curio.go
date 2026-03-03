@@ -76,18 +76,19 @@ const (
 )
 
 type PhysicalCopy struct {
-	ID        uuid.UUID     `json:"id"`
-	CurioID   uuid.UUID     `json:"curioId"`
-	Condition CopyCondition `json:"condition"`
-	Location  string        `json:"location"`
-	NodeID    string        `json:"nodeId"`
-	Status    CopyStatus    `json:"status"`
-	CreatedAt time.Time     `json:"createdAt"`
+	ID         uuid.UUID     `json:"id"`
+	CurioID    uuid.UUID     `json:"curioId"`
+	Condition  CopyCondition `json:"condition"`
+	Location   string        `json:"location"`
+	NodeID     string        `json:"nodeId"`
+	HomeNodeID string        `json:"homeNodeId"`
+	Status     CopyStatus    `json:"status"`
+	CreatedAt  time.Time     `json:"createdAt"`
 }
 
 type CopyTransfer struct {
-	ID           uuid.UUID      `json:"id"`
-	CopyID       uuid.UUID      `json:"copyId"`
+	ID           string         `json:"id"`           // "{source_node}/{dest_node}/{uuid_v7}"
+	GlobalCopyID string         `json:"globalCopyId"` // "{home_node}/{copy_uuid}"
 	TransferType TransferType   `json:"transferType"`
 	SourceNode   string         `json:"sourceNode"`
 	DestNode     string         `json:"destNode"`

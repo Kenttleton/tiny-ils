@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { getCuriosClient, getNetworkClient, call, grpcMessage } from '$lib/server/grpc/clients';
+import { getCuriosClient, call, grpcMessage } from '$lib/server/grpc/clients';
 import type { PageServerLoad, Actions } from './$types';
 import type { CopyTransfer, TransferList } from '$lib/api';
 
@@ -121,30 +121,17 @@ export const actions: Actions = {
 	request: async ({ request, locals }) => {
 		const data = await request.formData();
 		const nodeId = locals.nodeId;
-		const sourceNode = String(data.get('sourceNode') || nodeId);
-		const body = {
-			copy_id: String(data.get('copyId')),
-			transfer_type: String(data.get('transferType')),
-			source_node: sourceNode,
-			dest_node: String(data.get('destNode')),
-			initiated_by: locals.user?.userId ?? '',
-			notes: String(data.get('notes') ?? '')
-		};
 		try {
-			if (sourceNode === nodeId || !sourceNode) {
-				await call(getCuriosClient(), 'RequestTransfer', body);
-			} else {
-				await call(getNetworkClient(), 'InitiateRemoteTransfer', {
-					transfer_id: '',
-					copy_id: body.copy_id,
-					transfer_type: body.transfer_type,
-					source_node: sourceNode,
-					dest_node: body.dest_node || nodeId,
-					initiated_by: body.initiated_by,
-					user_jwt: '',
-					notes: body.notes
-				});
-			}
+			await call(getCuriosClient(), 'RequestTransfer', {
+				copy_id: String(data.get('copyId')),
+				transfer_type: String(data.get('transferType')),
+				source_node: String(data.get('sourceNode') || nodeId),
+				dest_node: String(data.get('destNode') || nodeId),
+				initiated_by: locals.user?.userId ?? '',
+				notes: String(data.get('notes') ?? ''),
+				id: '',
+				global_copy_id: ''
+			});
 		} catch (e) {
 			return fail(400, { error: grpcMessage(e) });
 		}

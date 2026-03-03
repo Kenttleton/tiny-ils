@@ -4,14 +4,24 @@ import type { PeerList } from '$lib/api';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const data = await call<PeerList>(getNetworkClient(), 'ListPeers', {}).catch(() => ({
-		peers: []
-	} as PeerList));
-	return { peers: data.peers ?? [] };
+	const [nodeInfo, peerData] = await Promise.all([
+		call<{ node_id: string; public_key: string; capabilities: string[] }>(
+			getNetworkClient(),
+			'GetNodeInfo',
+			{}
+		).catch(() => ({ node_id: '', public_key: '', capabilities: [] as string[] })),
+		call<PeerList>(getNetworkClient(), 'ListPeers', {}).catch(() => ({ peers: [] } as PeerList))
+	]);
+	return {
+		nodeId: nodeInfo.node_id,
+		publicKey: nodeInfo.public_key,
+		capabilities: nodeInfo.capabilities ?? [],
+		peers: peerData.peers ?? []
+	};
 };
 
 export const actions: Actions = {
-	register: async ({ request }) => {
+	connect: async ({ request }) => {
 		const form = await request.formData();
 		const body = {
 			node_id: form.get('nodeId')?.toString() ?? '',
@@ -21,7 +31,7 @@ export const actions: Actions = {
 		};
 		if (!body.node_id || !body.public_key || !body.address) {
 			return fail(400, {
-				error: 'nodeId, publicKey, and address are required',
+				error: 'Library ID, public key, and address are required',
 				values: {
 					nodeId: body.node_id,
 					publicKey: body.public_key,
@@ -31,7 +41,7 @@ export const actions: Actions = {
 			});
 		}
 		try {
-			await call(getNetworkClient(), 'RegisterPeer', body);
+			await call(getNetworkClient(), 'ConnectPeer', body);
 			return { success: true };
 		} catch (err) {
 			return fail(400, {
@@ -43,6 +53,20 @@ export const actions: Actions = {
 					displayName: body.display_name
 				}
 			});
+		}
+	},
+
+	approve: async ({ request }) => {
+		const form = await request.formData();
+		const nodeId = form.get('nodeId')?.toString() ?? '';
+		if (!nodeId) {
+			return fail(400, { error: 'Library ID is required' });
+		}
+		try {
+			await call(getNetworkClient(), 'ApprovePeer', { node_id: nodeId });
+			return { success: true };
+		} catch (err) {
+			return fail(400, { error: grpcMessage(err) });
 		}
 	}
 };

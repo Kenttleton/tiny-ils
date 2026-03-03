@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'path';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
@@ -17,37 +18,65 @@ function loadProto(filename: string) {
 
 const creds = grpc.credentials.createInsecure();
 
+// mTLS credentials for the network-manager. The BFF authenticates as this node
+// using the shared node_identity key pair — the same identity used by peers.
+// Falls back to insecure if the key files are not yet available (e.g. during build).
+function makeNetworkCreds(): grpc.ChannelCredentials {
+	const keyPath = process.env.NODE_KEY_PATH ?? '/data/node.key';
+	const certPath = process.env.NODE_CERT_PATH ?? '/data/node.crt';
+	try {
+		const key = fs.readFileSync(keyPath);
+		const cert = fs.readFileSync(certPath);
+		// Use own cert as root CA — the server presents the same cert, so signature
+		// verification succeeds. Hostname verification is skipped because the cert
+		// CN is the node Library ID, not the Docker hostname.
+		return grpc.credentials.createSsl(cert, key, cert, {
+			checkServerIdentity: () => undefined
+		});
+	} catch {
+		return grpc.credentials.createInsecure();
+	}
+}
+
+// Clients are lazy-initialised so proto files are only loaded at runtime,
+// not during Vite's build-time SSR analysis.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _curios: any, _users: any, _network: any;
+
 // ─── Curios Manager ──────────────────────────────────────────────────────────
 
-const curiosDef = loadProto('curios.proto');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const curiosPkg = (grpc.loadPackageDefinition(curiosDef) as any).curios;
-
-export function getCuriosClient() {
-	const addr = process.env.CURIOS_GRPC ?? 'localhost:50151';
-	return new curiosPkg.CuriosManager(addr, creds);
+export function getCuriosClient(): grpc.Client {
+	if (!_curios) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const pkg = (grpc.loadPackageDefinition(loadProto('curios.proto')) as any).curios;
+		_curios = new pkg.CuriosManager(process.env.CURIOS_GRPC ?? 'localhost:50151', creds);
+	}
+	return _curios as grpc.Client;
 }
 
 // ─── Users Manager ───────────────────────────────────────────────────────────
 
-const usersDef = loadProto('users.proto');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const usersPkg = (grpc.loadPackageDefinition(usersDef) as any).users;
-
-export function getUsersClient() {
-	const addr = process.env.USERS_GRPC ?? 'localhost:50152';
-	return new usersPkg.UsersManager(addr, creds);
+export function getUsersClient(): grpc.Client {
+	if (!_users) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const pkg = (grpc.loadPackageDefinition(loadProto('users.proto')) as any).users;
+		_users = new pkg.UsersManager(process.env.USERS_GRPC ?? 'localhost:50152', creds);
+	}
+	return _users as grpc.Client;
 }
 
 // ─── Network Manager ─────────────────────────────────────────────────────────
 
-const networkDef = loadProto('network.proto');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const networkPkg = (grpc.loadPackageDefinition(networkDef) as any).network;
-
-export function getNetworkClient() {
-	const addr = process.env.NETWORK_GRPC ?? 'localhost:50153';
-	return new networkPkg.NetworkManager(addr, creds);
+export function getNetworkClient(): grpc.Client {
+	if (!_network) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const pkg = (grpc.loadPackageDefinition(loadProto('network.proto')) as any).network;
+		_network = new pkg.NetworkManager(
+			process.env.NETWORK_GRPC ?? 'localhost:50153',
+			makeNetworkCreds()
+		);
+	}
+	return _network as grpc.Client;
 }
 
 // ─── Promisify helper ────────────────────────────────────────────────────────
@@ -59,6 +88,18 @@ export function call<T>(client: grpc.Client, method: string, req: object): Promi
 			if (err) reject(err);
 			else resolve(res);
 		});
+	});
+}
+
+/** Collect all messages from a server-streaming RPC into an array. */
+export function callStream<T>(client: grpc.Client, method: string, req: object): Promise<T[]> {
+	return new Promise((resolve, reject) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const stream = (client as any)[method](req) as grpc.ClientReadableStream<T>;
+		const results: T[] = [];
+		stream.on('data', (msg: T) => results.push(msg));
+		stream.on('end', () => resolve(results));
+		stream.on('error', (err: grpc.ServiceError) => reject(err));
 	});
 }
 
