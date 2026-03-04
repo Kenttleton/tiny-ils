@@ -1,5 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
-import { COOKIE, decodeJWTPayload } from '$lib/server/auth';
+import { cookieName, decodeJWTPayload } from '$lib/server/auth';
 import { getUsersClient, getDirectoryClient, call } from '$lib/server/grpc/clients';
 import { ensureConfig, getPublicUrl, getAllowLocalhost } from '$lib/server/config';
 import type { Claim } from '$lib/api';
@@ -64,7 +64,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const token = event.cookies.get(COOKIE);
+	const token = event.cookies.get(cookieName(event.locals.nodeId));
 	if (token) {
 		try {
 			const payload = decodeJWTPayload(token);

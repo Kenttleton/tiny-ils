@@ -31,6 +31,9 @@ func NewPeerStore(db *pgxpool.Pool) *PeerStore {
 
 // Upsert stores a peer as CONNECTED (admin-initiated — explicit trust).
 func (s *PeerStore) Upsert(ctx context.Context, p *Peer) error {
+	if p.Capabilities == nil {
+		p.Capabilities = []string{}
+	}
 	_, err := s.db.Exec(ctx,
 		`INSERT INTO peers (node_id, public_key, address, display_name, capabilities, status, first_seen, last_seen)
 		 VALUES ($1, $2, $3, $4, $5, 'CONNECTED', now(), now())
@@ -51,6 +54,9 @@ func (s *PeerStore) Upsert(ctx context.Context, p *Peer) error {
 // registration happened — this node was pre-registered by admin). If already
 // CONNECTED → unchanged. Returns the resulting status.
 func (s *PeerStore) UpsertInbound(ctx context.Context, p *Peer) (string, error) {
+	if p.Capabilities == nil {
+		p.Capabilities = []string{}
+	}
 	var status string
 	err := s.db.QueryRow(ctx,
 		`INSERT INTO peers (node_id, public_key, address, display_name, capabilities, status, first_seen, last_seen)

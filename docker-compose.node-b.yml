@@ -4,16 +4,21 @@
 # Stop with:   docker compose -f docker-compose.node-b.yml down
 # Full reset:  docker compose -f docker-compose.node-b.yml down -v
 #
-# Only network-b (host port 50163) and frontend-b (host port 3001) are
+# Only network-manager-b (host port 50163) and frontend-b (host port 3001) are
 # exposed to the host.  All other services are internal to this cluster.
 #
 # Cross-node peer addresses:
 #   To reach Node A from Node B admin UI: host.docker.internal:50153
 #   To reach Node B from Node A admin UI: host.docker.internal:50163
 
+networks:
+  node-b:
+    driver: bridge
+
 services:
   postgres-b:
     image: postgres:16-alpine
+    networks: [node-b]
     environment:
       POSTGRES_DB: tils
       POSTGRES_USER: tils
@@ -31,6 +36,7 @@ services:
     build:
       context: .
       dockerfile: curios-manager/Dockerfile
+    networks: [node-b]
     ports:
       - "50161:50151"
     healthcheck:
@@ -44,7 +50,7 @@ services:
       GRPC_PORT: "50151"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
-      NETWORK_GRPC: network-b:50154
+      NETWORK_GRPC: network-manager-b:50154
       REGISTER_ADDRESS: curios-b:50151
       LCP_SERVER_URL: ""
       LSD_SERVER_URL: ""
@@ -56,10 +62,11 @@ services:
       postgres-b:
         condition: service_healthy
 
-  users-b:
+  users-manager-b:
     build:
       context: .
       dockerfile: users-manager/Dockerfile
+    networks: [node-b]
     healthcheck:
       test: ["CMD", "/grpc-health-probe", "-addr=:50152"]
       interval: 10s
@@ -71,18 +78,19 @@ services:
       GRPC_PORT: "50152"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
-      NETWORK_GRPC: network-b:50154
-      REGISTER_ADDRESS: users-b:50152
+      NETWORK_GRPC: network-manager-b:50154
+      REGISTER_ADDRESS: users-manager-b:50152
     volumes:
       - node_identity-b:/data
     depends_on:
       postgres-b:
         condition: service_healthy
 
-  network-b:
+  network-manager-b:
     build:
       context: .
       dockerfile: network-manager/Dockerfile
+    networks: [node-b]
     ports:
       - "50163:50153"
       # Internal port 50154 is NOT exposed to the host — Docker-private only.
@@ -111,6 +119,7 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    networks: [node-b]
     ports:
       - "3001:3000"
     healthcheck:
@@ -121,9 +130,7 @@ services:
       start_period: 15s
     environment:
       ORIGIN: ${ORIGIN_B:-http://localhost:3001}
-      NETWORK_GRPC: network-b:50154
-      # CURIOS_GRPC / USERS_GRPC are optional overrides; without them the frontend
-      # discovers services via network-manager's LocalDirectory (Lookup + WhoAmI).
+      NETWORK_GRPC: network-manager-b:50154
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI_B:-http://localhost:3001/auth/callback/google}
@@ -133,9 +140,10 @@ services:
     volumes:
       - node_identity-b:/data
     depends_on:
-      network-b:
+      network-manager-b:
         condition: service_healthy
 
 volumes:
   pgdata-b:
   node_identity-b:
+  lcp_content-b:

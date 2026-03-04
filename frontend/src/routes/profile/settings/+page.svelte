@@ -115,6 +115,8 @@
 		<a href="/auth/google?link=true" class="btn-link-sso">Link Google account</a>
 	{:else if data.googleConfigured && profile.sso_provider !== 'google'}
 		<a href="/auth/google?link=true" class="btn-link-sso">Link a different Google account</a>
+	{:else if !data.googleConfigured && data.isManager}
+		<p class="desc admin-hint">Google SSO is not enabled on this node. Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> environment variables to enable it.</p>
 	{/if}
 </section>
 
@@ -186,6 +188,8 @@
 		text-decoration: none;
 	}
 	.btn-link-sso:hover { background: #f9fafb; }
+	.admin-hint { margin-top: 0.5rem; }
+	.admin-hint code { font-size: 0.8rem; background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 3px; }
 	.msg { font-size: 0.875rem; margin: 0 0 1.25rem; }
 	.error { color: #dc2626; }
 	.success { color: #16a34a; }

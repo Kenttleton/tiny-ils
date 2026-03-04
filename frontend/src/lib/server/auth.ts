@@ -1,10 +1,12 @@
 import type { Cookies } from '@sveltejs/kit';
 import type { Claim } from '$lib/api';
 
-export const COOKIE = 'tils_token';
+export function cookieName(nodeId: string): string {
+	return nodeId ? `${nodeId}_token` : 'token';
+}
 
-export function setAuthCookie(cookies: Cookies, jwt: string): void {
-	cookies.set(COOKIE, jwt, {
+export function setAuthCookie(cookies: Cookies, jwt: string, nodeId: string): void {
+	cookies.set(cookieName(nodeId), jwt, {
 		path: '/',
 		httpOnly: true,
 		sameSite: 'lax',
@@ -13,8 +15,8 @@ export function setAuthCookie(cookies: Cookies, jwt: string): void {
 	});
 }
 
-export function clearAuthCookie(cookies: Cookies): void {
-	cookies.delete(COOKIE, { path: '/' });
+export function clearAuthCookie(cookies: Cookies, nodeId: string): void {
+	cookies.delete(cookieName(nodeId), { path: '/' });
 }
 
 /** Decode a JWT payload without verifying the signature. Used only to read claims for UI. */

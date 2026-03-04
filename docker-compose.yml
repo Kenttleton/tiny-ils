@@ -1,6 +1,11 @@
+networks:
+  tils-intranet:
+    driver: bridge
+
 services:
   postgres:
     image: postgres:16-alpine
+    networks: [tils-intranet]
     environment:
       POSTGRES_DB: tils
       POSTGRES_USER: tils
@@ -20,6 +25,7 @@ services:
     build:
       context: .
       dockerfile: curios-manager/Dockerfile
+    networks: [tils-intranet]
     ports:
       - "50151:50151"
     healthcheck:
@@ -49,6 +55,7 @@ services:
     build:
       context: .
       dockerfile: users-manager/Dockerfile
+    networks: [tils-intranet]
     ports:
       - "50152:50152"
     healthcheck:
@@ -74,6 +81,7 @@ services:
     build:
       context: .
       dockerfile: network-manager/Dockerfile
+    networks: [tils-intranet]
     ports:
       - "50153:50153"
       # Internal port 50154 is NOT exposed to the host — Docker-private only.
@@ -102,6 +110,7 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    networks: [tils-intranet]
     ports:
       - "3000:3000"
     healthcheck:
@@ -135,6 +144,7 @@ services:
   lcp-server:
     image: ${LCP_SERVER_IMAGE:-readium/lcp-server:latest}
     profiles: [lcp]
+    networks: [tils-intranet]
     ports:
       - "10000:10000"
     environment:
@@ -151,6 +161,7 @@ services:
   lsd-server:
     image: ${LSD_SERVER_IMAGE:-readium/lsd-server:latest}
     profiles: [lcp]
+    networks: [tils-intranet]
     ports:
       - "10001:10001"
     environment:

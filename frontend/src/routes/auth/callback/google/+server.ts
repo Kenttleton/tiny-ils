@@ -12,21 +12,21 @@ function getGoogle() {
 	return new Google(clientId, clientSecret, redirectUri);
 }
 
-export const GET: RequestHandler = async ({ url, cookies }) => {
+export const GET: RequestHandler = async ({ url, cookies, locals }) => {
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
-	const storedState = cookies.get('google_oauth_state');
-	const codeVerifier = cookies.get('google_code_verifier');
+	const storedState = cookies.get(`${locals.nodeId}_google_oauth_state`);
+	const codeVerifier = cookies.get(`${locals.nodeId}_google_code_verifier`);
 
 	if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
 		throw redirect(303, '/auth/login');
 	}
 
-	const linkUserId = cookies.get('google_link_user_id') ?? null;
+	const linkUserId = cookies.get(`${locals.nodeId}_google_link_user_id`) ?? null;
 
-	cookies.delete('google_oauth_state', { path: '/' });
-	cookies.delete('google_code_verifier', { path: '/' });
-	cookies.delete('google_link_user_id', { path: '/' });
+	cookies.delete(`${locals.nodeId}_google_oauth_state`, { path: '/' });
+	cookies.delete(`${locals.nodeId}_google_code_verifier`, { path: '/' });
+	cookies.delete(`${locals.nodeId}_google_link_user_id`, { path: '/' });
 
 	try {
 		const google = getGoogle();
@@ -55,7 +55,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			display_name: userinfo.name ?? userinfo.email
 		});
 
-		setAuthCookie(cookies, res.token);
+		setAuthCookie(cookies, res.token, locals.nodeId);
 		throw redirect(303, '/');
 	} catch (err) {
 		if ((err as { status?: number }).status === 303) throw err;

@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, url }) => {
+	default: async ({ request, cookies, url, locals }) => {
 		const data = await request.formData();
 		const homeNodeAddress = data.get('home_node_address')?.toString().trim() ?? '';
 		const homeNodeId = data.get('home_node_id')?.toString().trim() ?? '';
@@ -30,7 +30,7 @@ export const actions: Actions = {
 					home_node_id: homeNodeId
 				}
 			);
-			setAuthCookie(cookies, res.token);
+			setAuthCookie(cookies, res.token, locals.nodeId);
 			throw redirect(303, next);
 		} catch (err) {
 			if ((err as { status?: number }).status === 303) throw err;

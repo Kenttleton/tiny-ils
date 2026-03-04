@@ -96,22 +96,20 @@ func (s *NetworkService) ConnectPeer(ctx context.Context, req *pb.PeerInfo) (*pb
 	if req.NodeId == "" || req.PublicKey == "" || req.Address == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "node_id, public_key, and address are required")
 	}
-	// Store the peer as CONNECTED locally (admin explicitly initiated this).
+	// Register ourselves with the remote node first so we get its capabilities.
+	ack, err := s.callRemoteRegister(req.Address)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "register with remote: %v", err)
+	}
+	// Store the peer as CONNECTED with the capabilities it reported.
 	if err := s.peers.Upsert(ctx, &store.Peer{
 		NodeID:       req.NodeId,
 		PublicKey:    req.PublicKey,
 		Address:      req.Address,
 		DisplayName:  req.DisplayName,
-		Capabilities: req.Capabilities,
+		Capabilities: ack.Capabilities,
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "store peer: %v", err)
-	}
-	// Attempt to register ourselves with the remote node.
-	ack, err := s.callRemoteRegister(req.Address)
-	if err != nil {
-		// Remote call failed, but we still stored them CONNECTED locally.
-		log.Printf("ConnectPeer: remote RegisterPeer on %s failed: %v", req.Address, err)
-		return &pb.PeerAck{NodeId: s.nodeID, PublicKey: s.pubKeyB64}, nil
 	}
 	return ack, nil
 }

@@ -26,13 +26,13 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 	const google = getGoogle();
 	const authUrl = google.createAuthorizationURL(state, codeVerifier, ['openid', 'email', 'profile']);
 
-	cookies.set('google_oauth_state', state, {
+	cookies.set(`${locals.nodeId}_google_oauth_state`, state, {
 		path: '/',
 		httpOnly: true,
 		maxAge: 60 * 10,
 		sameSite: 'lax'
 	});
-	cookies.set('google_code_verifier', codeVerifier, {
+	cookies.set(`${locals.nodeId}_google_code_verifier`, codeVerifier, {
 		path: '/',
 		httpOnly: true,
 		maxAge: 60 * 10,
@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 	});
 
 	if (isLink && locals.user) {
-		cookies.set('google_link_user_id', locals.user.userId, {
+		cookies.set(`${locals.nodeId}_google_link_user_id`, locals.user.userId, {
 			path: '/',
 			httpOnly: true,
 			maxAge: 60 * 10,

@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, locals }) => {
 		const data = await request.formData();
 		const email = data.get('email')?.toString() ?? '';
 		const password = data.get('password')?.toString() ?? '';
@@ -21,7 +21,7 @@ export const actions: Actions = {
 				password,
 				display_name: displayName ?? ''
 			});
-			setAuthCookie(cookies, res.token);
+			setAuthCookie(cookies, res.token, locals.nodeId);
 			throw redirect(303, '/');
 		} catch (err) {
 			if ((err as { status?: number }).status === 303) throw err;

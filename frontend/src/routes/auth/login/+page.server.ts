@@ -9,15 +9,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, url }) => {
+	default: async ({ request, cookies, url, locals }) => {
 		const data = await request.formData();
 		const email = data.get('email')?.toString() ?? '';
 		const password = data.get('password')?.toString() ?? '';
-		const next = data.get('next')?.toString() ?? url.searchParams.get('next') ?? '/';
+		const next = data.get('next')?.toString() || url.searchParams.get('next') || '/';
 
 		try {
 			const res = await call<{ token: string }>(getUsersClient(), 'Login', { email, password });
-			setAuthCookie(cookies, res.token);
+			setAuthCookie(cookies, res.token, locals.nodeId);
 			throw redirect(303, next);
 		} catch (err) {
 			if ((err as { status?: number }).status === 303) throw err;

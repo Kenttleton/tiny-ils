@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { getUsersClient, call, grpcMessage } from '$lib/server/grpc/clients';
+import { isManager } from '$lib/auth';
 import type { Actions, PageServerLoad } from './$types';
 
 interface User {
@@ -15,6 +16,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	return {
 		profile: user,
 		googleConfigured: !!process.env.GOOGLE_CLIENT_ID,
+		isManager: isManager(locals.user!.claims, locals.nodeId),
 		linked: url.searchParams.get('linked') ?? null,
 		linkError: url.searchParams.has('link_error')
 	};

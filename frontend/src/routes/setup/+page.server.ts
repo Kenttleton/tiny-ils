@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ request }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, locals }) => {
 		const data = await request.formData();
 		const displayName = String(data.get('displayName') ?? '').trim();
 		const email = String(data.get('email') ?? '').trim();
@@ -46,7 +46,7 @@ export const actions: Actions = {
 				display_name: displayName || email,
 				public_url: publicUrl
 			});
-			setAuthCookie(cookies, res.token);
+			setAuthCookie(cookies, res.token, locals.nodeId);
 		} catch (err) {
 			return fail(400, { error: grpcMessage(err), ...values });
 		}

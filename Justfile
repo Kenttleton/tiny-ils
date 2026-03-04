@@ -46,16 +46,9 @@ proto:
         proto/network.proto \
         proto/internal.proto
 
-# Install BFF Node.js dependencies
-bff-install:
-    cd frontend-bff && npm install
-
 # Install frontend Node.js dependencies
 frontend-install:
     cd frontend && npm install
-
-# Install all Node.js dependencies
-install-js: bff-install frontend-install
 
 # View logs for a specific service (e.g. just logs curios-manager)
 logs service:
