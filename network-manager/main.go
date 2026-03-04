@@ -7,16 +7,15 @@ import (
 	"log"
 	"net"
 	"os"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
-	curiospb "tiny-ils/gen/curiospb"
+	internalpb "tiny-ils/gen/internalpb"
 	pb "tiny-ils/gen/networkpb"
-	userspb "tiny-ils/gen/userspb"
 	"tiny-ils/network-manager/service"
 	"tiny-ils/network-manager/store"
 	"tiny-ils/shared/db"
@@ -42,7 +41,7 @@ func main() {
 		log.Fatalf("self-signed cert: %v", err)
 	}
 
-	// Write the cert to disk so the local BFF can load it for mTLS.
+	// Write the cert to disk so it can be shared with other services if needed.
 	certPath := envOr("NODE_CERT_PATH", "/data/node.crt")
 	if err := identity.WriteCertPEM(certPath, nodeCert); err != nil {
 		log.Printf("warning: write cert PEM: %v", err)
@@ -54,49 +53,43 @@ func main() {
 	}
 	defer pool.Close()
 
-	// Connect to local curios-manager (internal, no TLS needed).
-	curiosAddr := envOr("CURIOS_GRPC", "localhost:50151")
-	curiosConn, err := grpc.NewClient(curiosAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("curios-manager client: %v", err)
-	}
-	defer curiosConn.Close()
-	curiosClient := curiospb.NewCuriosManagerClient(curiosConn)
-
-	usersAddr := envOr("USERS_GRPC", "localhost:50152")
-	usersConn, err := grpc.NewClient(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("users-manager client: %v", err)
-	}
-	defer usersConn.Close()
-	usersClient := userspb.NewUsersManagerClient(usersConn)
-
-	// Parse node capabilities from env; default to full stack.
-	capStr := envOr("NODE_CAPABILITIES", "curios,users,ui")
-	capabilities := strings.Split(capStr, ",")
-	for i, c := range capabilities {
-		capabilities[i] = strings.TrimSpace(c)
-	}
-
 	peerStore := store.NewPeerStore(pool)
-	svc := service.NewNetworkService(peerStore, nodeID, pubKey, privKey, nodeCert, capabilities, curiosClient, usersClient)
+	registry := service.NewLocalDirectoryService()
+	svc := service.NewNetworkService(peerStore, nodeID, pubKey, privKey, nodeCert, registry)
 
-	port := envOr("GRPC_PORT", "50153")
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	// ─── Internal server (Docker-private, no auth) ────────────────────────────
+	// Hosts LocalDirectory (service registration + lookup) and NetworkManager
+	// (for admin ops and relay calls from local curios-manager / frontend).
+	internalPort := envOr("INTERNAL_GRPC_PORT", "50154")
+	internalLis, err := net.Listen("tcp", fmt.Sprintf(":%s", internalPort))
 	if err != nil {
-		log.Fatalf("listen: %v", err)
+		log.Fatalf("internal listen: %v", err)
 	}
+	internalSrv := grpc.NewServer()
+	internalpb.RegisterLocalDirectoryServer(internalSrv, registry)
+	pb.RegisterNetworkManagerServer(internalSrv, svc)
+	grpc_health_v1.RegisterHealthServer(internalSrv, health.NewServer())
+	go func() {
+		log.Printf("network-manager internal listening on :%s (insecure)", internalPort)
+		if err := internalSrv.Serve(internalLis); err != nil {
+			log.Fatalf("internal serve: %v", err)
+		}
+	}()
 
-	// mTLS: client certs requested but not required.
-	// The trust interceptor handles authorization based on cert identity.
+	// ─── External server (mTLS, host-exposed, peer-to-peer only) ─────────────
+	externalPort := envOr("GRPC_PORT", "50153")
+	externalLis, err := net.Listen("tcp", fmt.Sprintf(":%s", externalPort))
+	if err != nil {
+		log.Fatalf("external listen: %v", err)
+	}
 	tlsCfg := service.ServerTLSConfig(nodeCert)
-	srv := grpc.NewServer(
+	externalSrv := grpc.NewServer(
 		grpc.Creds(credentials.NewTLS(tlsCfg)),
 		grpc.ChainUnaryInterceptor(service.TrustInterceptor(peerStore, pubKeyB64)),
 		grpc.ChainStreamInterceptor(service.TrustStreamInterceptor(peerStore, pubKeyB64)),
 	)
-	pb.RegisterNetworkManagerServer(srv, svc)
-	reflection.Register(srv)
+	pb.RegisterNetworkManagerServer(externalSrv, svc)
+	reflection.Register(externalSrv)
 
 	// Start HTTP interop server (digital passthrough, ISO 18626 stub, SRU stub).
 	httpPort := envOr("HTTP_PORT", "8153")
@@ -107,8 +100,8 @@ func main() {
 		}
 	}()
 
-	log.Printf("network-manager listening on :%s (mTLS)", port)
-	if err := srv.Serve(lis); err != nil {
+	log.Printf("network-manager external listening on :%s (mTLS)", externalPort)
+	if err := externalSrv.Serve(externalLis); err != nil {
 		log.Fatalf("serve: %v", err)
 	}
 }

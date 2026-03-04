@@ -26,35 +26,40 @@ import (
 
 type NetworkService struct {
 	pb.UnimplementedNetworkManagerServer
-	peers        *store.PeerStore
-	nodeID       string
-	pubKey       ed25519.PublicKey
-	privKey      ed25519.PrivateKey
-	pubKeyB64    string
-	nodeCert     tls.Certificate
-	capabilities []string
-	curiosClient curiospb.CuriosManagerClient
-	usersClient  userspb.UsersManagerClient
+	peers     *store.PeerStore
+	nodeID    string
+	pubKey    ed25519.PublicKey
+	privKey   ed25519.PrivateKey
+	pubKeyB64 string
+	nodeCert  tls.Certificate
+	registry  *LocalDirectoryService
 }
 
-func NewNetworkService(peers *store.PeerStore, nodeID string, pub ed25519.PublicKey, priv ed25519.PrivateKey, nodeCert tls.Certificate, capabilities []string, curiosClient curiospb.CuriosManagerClient, usersClient userspb.UsersManagerClient) *NetworkService {
+func NewNetworkService(peers *store.PeerStore, nodeID string, pub ed25519.PublicKey, priv ed25519.PrivateKey, nodeCert tls.Certificate, registry *LocalDirectoryService) *NetworkService {
 	return &NetworkService{
-		peers:        peers,
-		nodeID:       nodeID,
-		pubKey:       pub,
-		privKey:      priv,
-		pubKeyB64:    base64.StdEncoding.EncodeToString(pub),
-		nodeCert:     nodeCert,
-		capabilities: capabilities,
-		curiosClient: curiosClient,
-		usersClient:  usersClient,
+		peers:     peers,
+		nodeID:    nodeID,
+		pubKey:    pub,
+		privKey:   priv,
+		pubKeyB64: base64.StdEncoding.EncodeToString(pub),
+		nodeCert:  nodeCert,
+		registry:  registry,
 	}
+}
+
+// firstCuriosSvc returns the first registered curios client, or nil if none registered.
+func (s *NetworkService) firstCuriosSvc() curiospb.CuriosManagerClient {
+	svcs := s.registry.CuriosSvcs()
+	if len(svcs) == 0 {
+		return nil
+	}
+	return svcs[0].client
 }
 
 // ─── Peer registry ───────────────────────────────────────────────────────────
 
 func (s *NetworkService) GetNodeInfo(_ context.Context, _ *pb.Empty) (*pb.PeerAck, error) {
-	return &pb.PeerAck{NodeId: s.nodeID, PublicKey: s.pubKeyB64, Capabilities: s.capabilities}, nil
+	return &pb.PeerAck{NodeId: s.nodeID, PublicKey: s.pubKeyB64, Capabilities: s.registry.Capabilities()}, nil
 }
 
 // RegisterPeer handles inbound connection requests from remote peer nodes.
@@ -81,7 +86,7 @@ func (s *NetworkService) RegisterPeer(ctx context.Context, req *pb.PeerInfo) (*p
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "register peer: %v", err)
 	}
-	return &pb.PeerAck{NodeId: s.nodeID, PublicKey: s.pubKeyB64, Capabilities: s.capabilities}, nil
+	return &pb.PeerAck{NodeId: s.nodeID, PublicKey: s.pubKeyB64, Capabilities: s.registry.Capabilities()}, nil
 }
 
 // ConnectPeer is the admin-initiated outbound connection flow.
@@ -204,8 +209,13 @@ func (s *NetworkService) queryPeer(ctx context.Context, peer *store.Peer, req *p
 
 // SearchCatalog searches this node's local catalog and returns a single result.
 // It is called by remote peer nodes as part of their SearchNetwork fan-out.
+// Returns an empty result (not an error) when no curios service is registered.
 func (s *NetworkService) SearchCatalog(ctx context.Context, req *pb.NetworkSearchRequest) (*pb.NetworkSearchResult, error) {
-	resp, err := s.curiosClient.ListCurios(ctx, &curiospb.ListCuriosRequest{
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return &pb.NetworkSearchResult{}, nil
+	}
+	resp, err := curios.ListCurios(ctx, &curiospb.ListCuriosRequest{
 		Query:     req.Query,
 		MediaType: req.MediaType,
 		Limit:     50,
@@ -245,12 +255,16 @@ func (s *NetworkService) RequestBorrow(ctx context.Context, req *pb.BorrowReques
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
 
 	copyID := req.CopyId
 
 	// If no specific copy requested, look for an available physical copy.
 	if copyID == "" {
-		copies, err := s.curiosClient.ListCopies(ctx, &curiospb.CurioId{Id: req.CurioId})
+		copies, err := curios.ListCopies(ctx, &curiospb.CurioId{Id: req.CurioId})
 		if err == nil {
 			for _, c := range copies.Copies {
 				if c.Status == "AVAILABLE" {
@@ -267,7 +281,7 @@ func (s *NetworkService) RequestBorrow(ctx context.Context, req *pb.BorrowReques
 		if req.NeedBefore > 0 {
 			dueDate = req.NeedBefore
 		}
-		loan, err := s.curiosClient.CheckoutCopy(ctx, &curiospb.CheckoutRequest{
+		loan, err := curios.CheckoutCopy(ctx, &curiospb.CheckoutRequest{
 			CopyId:     copyID,
 			UserId:     claims.UserID,
 			UserNodeId: claims.Issuer,
@@ -285,7 +299,7 @@ func (s *NetworkService) RequestBorrow(ctx context.Context, req *pb.BorrowReques
 	}
 
 	// No physical copy available — try digital lease.
-	lease, err := s.curiosClient.IssueLease(ctx, &curiospb.LeaseRequest{
+	lease, err := curios.IssueLease(ctx, &curiospb.LeaseRequest{
 		CurioId:    req.CurioId,
 		UserId:     claims.UserID,
 		UserNodeId: claims.Issuer,
@@ -308,10 +322,14 @@ func (s *NetworkService) ReturnCurio(ctx context.Context, req *pb.ReturnRequest)
 	if _, err := s.verifyForeignJWT(ctx, req.UserJwt, ""); err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
 
 	if req.CopyId != "" {
 		// Physical return.
-		loan, err := s.curiosClient.ReturnCopy(ctx, &curiospb.ReturnRequest{CopyId: req.CopyId})
+		loan, err := curios.ReturnCopy(ctx, &curiospb.ReturnRequest{CopyId: req.CopyId})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "return copy: %v", err)
 		}
@@ -322,7 +340,7 @@ func (s *NetworkService) ReturnCurio(ctx context.Context, req *pb.ReturnRequest)
 	if req.LoanId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "copy_id or loan_id is required")
 	}
-	if _, err := s.curiosClient.RevokeLease(ctx, &curiospb.LeaseId{Id: req.LoanId}); err != nil {
+	if _, err := curios.RevokeLease(ctx, &curiospb.LeaseId{Id: req.LoanId}); err != nil {
 		return nil, status.Errorf(codes.Internal, "revoke lease: %v", err)
 	}
 	return &pb.ReturnResponse{ReturnedAt: time.Now().Unix()}, nil
@@ -351,8 +369,12 @@ func (s *NetworkService) IssueGuestToken(ctx context.Context, req *pb.GuestToken
 	if req.UserId == "" || req.RequestingNode == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "user_id and requesting_node are required")
 	}
+	usersSvc, err := s.registry.GetAnyUsersSvc()
+	if err != nil || usersSvc == nil {
+		return nil, status.Errorf(codes.Unavailable, "no users service registered")
+	}
 	// Verify the user exists on this node.
-	user, err := s.usersClient.GetMe(ctx, &userspb.UserId{Id: req.UserId})
+	user, err := usersSvc.client.GetMe(ctx, &userspb.UserId{Id: req.UserId})
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
 	}
@@ -400,9 +422,13 @@ func (s *NetworkService) AuthenticateGuest(ctx context.Context, req *pb.Authenti
 	}
 
 	// Create or update a thin local user record and issue a local session JWT.
-	authResp, err := s.usersClient.UpsertGuestUser(ctx, &userspb.UpsertGuestUserRequest{
-		UserId:     req.UserId,
-		HomeNodeId: req.HomeNodeId,
+	usersSvc, usersErr := s.registry.GetAnyUsersSvc()
+	if usersErr != nil || usersSvc == nil {
+		return nil, status.Errorf(codes.Unavailable, "no users service registered")
+	}
+	authResp, err := usersSvc.client.UpsertGuestUser(ctx, &userspb.UpsertGuestUserRequest{
+		UserId:      req.UserId,
+		HomeNodeId:  req.HomeNodeId,
 		DisplayName: guestResp.DisplayName,
 	})
 	if err != nil {
@@ -460,10 +486,15 @@ func (s *NetworkService) GetUserLoans(req *pb.UserLoansRequest, stream pb.Networ
 
 // localUserLoans queries the local curios-manager for a user's physical loans
 // and digital leases, returning them as a UserLoansResult.
+// Returns an empty result when no curios service is registered.
 func (s *NetworkService) localUserLoans(ctx context.Context, req *pb.UserLoansRequest) (*pb.UserLoansResult, error) {
 	result := &pb.UserLoansResult{}
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return result, nil
+	}
 
-	loanResp, err := s.curiosClient.ListLoans(ctx, &curiospb.ListLoansRequest{
+	loanResp, err := curios.ListLoans(ctx, &curiospb.ListLoansRequest{
 		UserId:     req.UserId,
 		UserNodeId: req.UserNodeId,
 		ActiveOnly: req.ActiveOnly,
@@ -475,17 +506,17 @@ func (s *NetworkService) localUserLoans(ctx context.Context, req *pb.UserLoansRe
 	}
 	for _, l := range loanResp.Loans {
 		result.Loans = append(result.Loans, &pb.RemoteLoan{
-			LoanId:    l.Id,
-			CurioId:   l.CurioId,
+			LoanId:     l.Id,
+			CurioId:    l.CurioId,
 			CurioTitle: l.CurioTitle,
-			IsDigital: false,
-			IssuedAt:  l.CheckedOut,
-			DueDate:   l.DueDate,
-			Closed:    l.ReturnedAt != 0,
+			IsDigital:  false,
+			IssuedAt:   l.CheckedOut,
+			DueDate:    l.DueDate,
+			Closed:     l.ReturnedAt != 0,
 		})
 	}
 
-	leaseResp, err := s.curiosClient.ListLeases(ctx, &curiospb.ListLeasesRequest{
+	leaseResp, err := curios.ListLeases(ctx, &curiospb.ListLeasesRequest{
 		UserId:     req.UserId,
 		UserNodeId: req.UserNodeId,
 		ActiveOnly: req.ActiveOnly,
@@ -540,7 +571,11 @@ func (s *NetworkService) RequestDigitalLease(ctx context.Context, req *pb.Digita
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
-	lease, err := s.curiosClient.IssueLease(ctx, &curiospb.LeaseRequest{
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
+	lease, err := curios.IssueLease(ctx, &curiospb.LeaseRequest{
 		CurioId:    req.CurioId,
 		UserId:     claims.UserID,
 		UserNodeId: claims.Issuer,
@@ -563,7 +598,11 @@ func (s *NetworkService) RevokeDigitalLease(ctx context.Context, req *pb.LeaseRe
 	if _, err := s.verifyForeignJWT(ctx, req.UserJwt, ""); err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
-	if _, err := s.curiosClient.RevokeLease(ctx, &curiospb.LeaseId{Id: req.LeaseId}); err != nil {
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
+	if _, err := curios.RevokeLease(ctx, &curiospb.LeaseId{Id: req.LeaseId}); err != nil {
 		return nil, status.Errorf(codes.Internal, "revoke lease: %v", err)
 	}
 	return &pb.Empty{}, nil
@@ -585,7 +624,7 @@ func (s *NetworkService) callRemoteRegister(address string) (*pb.PeerAck, error)
 		NodeId:       s.nodeID,
 		PublicKey:    s.pubKeyB64,
 		Address:      "", // remote cannot call back via this field; use address stored at registration
-		Capabilities: s.capabilities,
+		Capabilities: s.registry.Capabilities(),
 	})
 }
 

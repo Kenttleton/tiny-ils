@@ -17,9 +17,11 @@ COPY gen/ ./gen/
 COPY users-manager/ ./users-manager/
 
 RUN CGO_ENABLED=0 go build -o /users-manager ./users-manager
+RUN CGO_ENABLED=0 GOWORK=off go install github.com/grpc-ecosystem/grpc-health-probe@latest
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /users-manager /users-manager
+COPY --from=builder /go/bin/grpc-health-probe /grpc-health-probe
 EXPOSE 50152
 ENTRYPOINT ["/users-manager"]

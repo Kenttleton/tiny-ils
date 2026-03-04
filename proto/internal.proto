@@ -1,0 +1,40 @@
+syntax = "proto3";
+package internal;
+option go_package = "tiny-ils/gen/internalpb;internalpb";
+
+// LocalServiceInfo announces or describes a local capability service.
+message LocalServiceInfo {
+  string name    = 1; // "curios" | "users" | "ui"
+  string address = 2; // internal gRPC host:port; empty for "ui"
+}
+
+message Empty {}
+
+message LookupRequest {
+  string name = 1; // capability name to find
+}
+
+message LookupResponse {
+  repeated LocalServiceInfo services = 1;
+}
+
+// ServiceInfo is returned by each service's WhoAmI RPC.
+message ServiceInfo {
+  string name    = 1; // "curios" | "users" | "ui"
+  string address = 2; // self-reported gRPC address
+  string version = 3; // optional version string
+}
+
+// LocalDirectory is served only on the internal gRPC port (network-manager).
+// Services call Announce on startup to register. Clients call Lookup to discover.
+service LocalDirectory {
+  rpc Announce(LocalServiceInfo) returns (Empty);
+  rpc Lookup(LookupRequest)      returns (LookupResponse);
+}
+
+// CapabilityService is implemented by every local capability service
+// (curios-manager, users-manager, etc.) on their own gRPC port.
+// Callers use this after Lookup to verify identity and version.
+service CapabilityService {
+  rpc WhoAmI(Empty) returns (ServiceInfo);
+}

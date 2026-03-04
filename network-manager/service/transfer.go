@@ -22,7 +22,11 @@ func (s *NetworkService) InitiateRemoteTransfer(ctx context.Context, req *pb.Rem
 		}
 	}
 
-	xfer, err := s.curiosClient.RequestTransfer(ctx, &curiospb.TransferRequest{
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
+	xfer, err := curios.RequestTransfer(ctx, &curiospb.TransferRequest{
 		Id:           req.TransferId,
 		CopyId:       req.CopyId,
 		TransferType: req.TransferType,
@@ -52,18 +56,22 @@ func (s *NetworkService) NotifyTransferUpdate(ctx context.Context, req *pb.Trans
 		ActorId:    req.ActorId,
 	}
 
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		return nil, status.Errorf(codes.Unavailable, "no curios service registered")
+	}
 	var err error
 	switch req.NewStatus {
 	case "APPROVED":
-		_, err = s.curiosClient.ApproveTransfer(ctx, action)
+		_, err = curios.ApproveTransfer(ctx, action)
 	case "IN_TRANSIT":
-		_, err = s.curiosClient.MarkShipped(ctx, action)
+		_, err = curios.MarkShipped(ctx, action)
 	case "RECEIVED":
-		_, err = s.curiosClient.ConfirmReceived(ctx, action)
+		_, err = curios.ConfirmReceived(ctx, action)
 	case "REJECTED":
-		_, err = s.curiosClient.RejectTransfer(ctx, action)
+		_, err = curios.RejectTransfer(ctx, action)
 	case "CANCELLED":
-		_, err = s.curiosClient.CancelTransfer(ctx, action)
+		_, err = curios.CancelTransfer(ctx, action)
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "unknown transfer status: %s", req.NewStatus)
 	}

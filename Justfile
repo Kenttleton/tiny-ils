@@ -20,9 +20,8 @@ down:
 down-clean:
     docker compose down -v
 
-# Run database migrations against DATABASE_URL (post-release / production use).
-# During development the schema is initialized automatically via
-# postgres's /docker-entrypoint-initdb.d mechanism — no manual migration needed.
+# Apply schema files against DATABASE_URL (production / external DB use).
+# In development, schema is applied automatically via postgres's initdb mechanism.
 db-migrate:
     go run ./tools/migrate
 
@@ -44,7 +43,8 @@ proto:
         --go-grpc_out=./gen --go-grpc_opt=module=tiny-ils/gen \
         proto/curios.proto \
         proto/users.proto \
-        proto/network.proto
+        proto/network.proto \
+        proto/internal.proto
 
 # Install BFF Node.js dependencies
 bff-install:
@@ -64,3 +64,29 @@ logs service:
 # Open a psql shell against the dev database
 db:
     docker compose exec postgres psql -U tils -d tils
+
+# ─── Two-node testing ─────────────────────────────────────────────────────────
+
+# Start Node B peer cluster (Node A is the default `just dev`)
+node-b:
+    docker compose -f docker-compose.node-b.yml up --build
+
+# Start Node B in the background
+node-b-bg:
+    docker compose -f docker-compose.node-b.yml up --build -d
+
+# Stop Node B (simulate peer going offline)
+node-b-down:
+    docker compose -f docker-compose.node-b.yml down
+
+# Full reset of Node B (remove volumes)
+node-b-clean:
+    docker compose -f docker-compose.node-b.yml down -v
+
+# Seed Node A with test curios via gRPC
+seed:
+    CURIOS_GRPC=localhost:50151 go run ./tools/seed
+
+# Seed Node B with test curios via gRPC
+seed-b:
+    CURIOS_GRPC=localhost:50161 go run ./tools/seed

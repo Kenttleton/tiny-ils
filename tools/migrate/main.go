@@ -1,5 +1,5 @@
-// migrate runs all SQL migrations in order against the DATABASE_URL.
-// It tracks applied migrations in a schema_migrations table.
+// migrate applies all SQL schema files in order against the DATABASE_URL.
+// It tracks applied files in a schema_migrations table.
 package main
 
 import (
@@ -32,14 +32,14 @@ func main() {
 		log.Fatalf("ensure migrations table: %v", err)
 	}
 
-	migrationsDir := "migrations"
+	schemaDir := "schema"
 	if len(os.Args) > 1 {
-		migrationsDir = os.Args[1]
+		schemaDir = os.Args[1]
 	}
 
-	files, err := filepath.Glob(filepath.Join(migrationsDir, "*.sql"))
+	files, err := filepath.Glob(filepath.Join(schemaDir, "*.sql"))
 	if err != nil {
-		log.Fatalf("glob migrations: %v", err)
+		log.Fatalf("glob schema: %v", err)
 	}
 	sort.Strings(files)
 
@@ -72,7 +72,7 @@ func main() {
 		applied++
 	}
 
-	fmt.Printf("migrations complete: %d applied\n", applied)
+	fmt.Printf("schema applied: %d files\n", applied)
 }
 
 func ensureMigrationsTable(ctx context.Context, conn *pgx.Conn) error {

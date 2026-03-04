@@ -151,6 +151,12 @@ message CopyList {
   repeated PhysicalCopy copies = 1;
 }
 
+message CreateCopyRequest {
+  string curio_id  = 1;
+  string condition = 2; // NEW | GOOD | FAIR | POOR | LOST; default GOOD
+  string location  = 3;
+}
+
 message CheckoutRequest {
   string copy_id      = 1;
   string user_id      = 2;
@@ -275,6 +281,7 @@ service CuriosManager {
 
   // Physical copies and loans
   rpc ListCopies(CurioId) returns (CopyList);
+  rpc CreateCopy(CreateCopyRequest) returns (PhysicalCopy);
   rpc ListLoans(ListLoansRequest) returns (LoanList);
   rpc CheckoutCopy(CheckoutRequest) returns (PhysicalLoan);
   rpc ReturnCopy(ReturnRequest) returns (PhysicalLoan);

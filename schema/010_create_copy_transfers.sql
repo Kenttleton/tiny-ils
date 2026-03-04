@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS copy_transfers (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  copy_id         UUID NOT NULL REFERENCES physical_copies(id) ON DELETE RESTRICT,
+  id              TEXT PRIMARY KEY,
+  global_copy_id  TEXT NOT NULL DEFAULT '',  -- "{home_node_fingerprint}/{copy_uuid}"
   transfer_type   VARCHAR(32) NOT NULL,   -- ILL | RETURN | PERMANENT
   source_node     VARCHAR(255) NOT NULL,  -- node sending the copy
   dest_node       VARCHAR(255) NOT NULL,  -- node receiving the copy
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS copy_transfers (
 
 -- status values: PENDING | APPROVED | IN_TRANSIT | RECEIVED | REJECTED | CANCELLED
 
-CREATE INDEX IF NOT EXISTS copy_transfers_copy_id ON copy_transfers(copy_id);
+CREATE INDEX IF NOT EXISTS copy_transfers_global_copy_id ON copy_transfers(global_copy_id);
 
 CREATE INDEX IF NOT EXISTS copy_transfers_open
   ON copy_transfers(status)

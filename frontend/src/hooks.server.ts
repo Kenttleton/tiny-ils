@@ -1,11 +1,12 @@
 import type { Handle } from '@sveltejs/kit';
 import { COOKIE, decodeJWTPayload } from '$lib/server/auth';
-import { getUsersClient, call } from '$lib/server/grpc/clients';
+import { getUsersClient, getDirectoryClient, call } from '$lib/server/grpc/clients';
 import { ensureConfig, getPublicUrl, getAllowLocalhost } from '$lib/server/config';
 import type { Claim } from '$lib/api';
 
 // Discovered from the gRPC service on first request; cached for the process lifetime.
 let _nodeId = '';
+let _announced = false;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 
@@ -27,6 +28,16 @@ function isLocalhost(origin: string): boolean {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Announce UI to network-manager's LocalDirectory once per process lifetime.
+	if (!_announced) {
+		try {
+			await call(getDirectoryClient(), 'Announce', { name: 'ui', address: '' });
+			_announced = true;
+		} catch {
+			// network-manager not yet reachable — will retry on the next request
+		}
+	}
+
 	if (!_nodeId) {
 		try {
 			const res = await call<{ node_id: string }>(getUsersClient(), 'GetNodeID', {});

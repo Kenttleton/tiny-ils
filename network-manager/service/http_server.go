@@ -62,7 +62,12 @@ func (s *NetworkService) handleDigitalLease(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Fetch lease from curios-manager.
-	lease, err := s.curiosClient.GetLease(ctx, &curiospb.LeaseId{Id: leaseID})
+	curios := s.firstCuriosSvc()
+	if curios == nil {
+		http.Error(w, "no curios service registered", http.StatusServiceUnavailable)
+		return
+	}
+	lease, err := curios.GetLease(ctx, &curiospb.LeaseId{Id: leaseID})
 	if err != nil {
 		http.Error(w, "lease not found", http.StatusNotFound)
 		return

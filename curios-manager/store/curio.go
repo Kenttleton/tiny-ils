@@ -12,11 +12,12 @@ import (
 )
 
 type CurioStore struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	serviceID uuid.UUID
 }
 
-func NewCurioStore(db *pgxpool.Pool) *CurioStore {
-	return &CurioStore{db: db}
+func NewCurioStore(db *pgxpool.Pool, serviceID uuid.UUID) *CurioStore {
+	return &CurioStore{db: db, serviceID: serviceID}
 }
 
 type ListFilter struct {
@@ -104,7 +105,7 @@ func (s *CurioStore) Get(ctx context.Context, id uuid.UUID) (*models.Curio, erro
 }
 
 func (s *CurioStore) Create(ctx context.Context, c *models.Curio) (*models.Curio, error) {
-	c.ID = uuid.New()
+	c.ID = saltedID(s.serviceID)
 	now := time.Now()
 	c.CreatedAt = now
 	c.UpdatedAt = now

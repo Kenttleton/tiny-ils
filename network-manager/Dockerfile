@@ -17,9 +17,11 @@ COPY gen/ ./gen/
 COPY network-manager/ ./network-manager/
 
 RUN CGO_ENABLED=0 go build -o /network-manager ./network-manager
+RUN CGO_ENABLED=0 GOWORK=off go install github.com/grpc-ecosystem/grpc-health-probe@latest
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /network-manager /network-manager
+COPY --from=builder /go/bin/grpc-health-probe /grpc-health-probe
 EXPOSE 50153
 ENTRYPOINT ["/network-manager"]

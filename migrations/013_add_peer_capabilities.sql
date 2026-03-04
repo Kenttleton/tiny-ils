@@ -1,1 +1,0 @@
-ALTER TABLE peers ADD COLUMN IF NOT EXISTS capabilities text[] NOT NULL DEFAULT '{}';

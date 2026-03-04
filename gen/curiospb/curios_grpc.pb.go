@@ -26,6 +26,7 @@ const (
 	CuriosManager_DeleteCurio_FullMethodName        = "/curios.CuriosManager/DeleteCurio"
 	CuriosManager_EnrichMetadata_FullMethodName     = "/curios.CuriosManager/EnrichMetadata"
 	CuriosManager_ListCopies_FullMethodName         = "/curios.CuriosManager/ListCopies"
+	CuriosManager_CreateCopy_FullMethodName         = "/curios.CuriosManager/CreateCopy"
 	CuriosManager_ListLoans_FullMethodName          = "/curios.CuriosManager/ListLoans"
 	CuriosManager_CheckoutCopy_FullMethodName       = "/curios.CuriosManager/CheckoutCopy"
 	CuriosManager_ReturnCopy_FullMethodName         = "/curios.CuriosManager/ReturnCopy"
@@ -61,6 +62,7 @@ type CuriosManagerClient interface {
 	EnrichMetadata(ctx context.Context, in *EnrichRequest, opts ...grpc.CallOption) (*CurioMetadata, error)
 	// Physical copies and loans
 	ListCopies(ctx context.Context, in *CurioId, opts ...grpc.CallOption) (*CopyList, error)
+	CreateCopy(ctx context.Context, in *CreateCopyRequest, opts ...grpc.CallOption) (*PhysicalCopy, error)
 	ListLoans(ctx context.Context, in *ListLoansRequest, opts ...grpc.CallOption) (*LoanList, error)
 	CheckoutCopy(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*PhysicalLoan, error)
 	ReturnCopy(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*PhysicalLoan, error)
@@ -156,6 +158,16 @@ func (c *curiosManagerClient) ListCopies(ctx context.Context, in *CurioId, opts 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CopyList)
 	err := c.cc.Invoke(ctx, CuriosManager_ListCopies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *curiosManagerClient) CreateCopy(ctx context.Context, in *CreateCopyRequest, opts ...grpc.CallOption) (*PhysicalCopy, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PhysicalCopy)
+	err := c.cc.Invoke(ctx, CuriosManager_CreateCopy_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -366,6 +378,7 @@ type CuriosManagerServer interface {
 	EnrichMetadata(context.Context, *EnrichRequest) (*CurioMetadata, error)
 	// Physical copies and loans
 	ListCopies(context.Context, *CurioId) (*CopyList, error)
+	CreateCopy(context.Context, *CreateCopyRequest) (*PhysicalCopy, error)
 	ListLoans(context.Context, *ListLoansRequest) (*LoanList, error)
 	CheckoutCopy(context.Context, *CheckoutRequest) (*PhysicalLoan, error)
 	ReturnCopy(context.Context, *ReturnRequest) (*PhysicalLoan, error)
@@ -417,6 +430,9 @@ func (UnimplementedCuriosManagerServer) EnrichMetadata(context.Context, *EnrichR
 }
 func (UnimplementedCuriosManagerServer) ListCopies(context.Context, *CurioId) (*CopyList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCopies not implemented")
+}
+func (UnimplementedCuriosManagerServer) CreateCopy(context.Context, *CreateCopyRequest) (*PhysicalCopy, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCopy not implemented")
 }
 func (UnimplementedCuriosManagerServer) ListLoans(context.Context, *ListLoansRequest) (*LoanList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListLoans not implemented")
@@ -618,6 +634,24 @@ func _CuriosManager_ListCopies_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CuriosManagerServer).ListCopies(ctx, req.(*CurioId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CuriosManager_CreateCopy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCopyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CuriosManagerServer).CreateCopy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CuriosManager_CreateCopy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CuriosManagerServer).CreateCopy(ctx, req.(*CreateCopyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -998,6 +1032,10 @@ var CuriosManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCopies",
 			Handler:    _CuriosManager_ListCopies_Handler,
+		},
+		{
+			MethodName: "CreateCopy",
+			Handler:    _CuriosManager_CreateCopy_Handler,
 		},
 		{
 			MethodName: "ListLoans",

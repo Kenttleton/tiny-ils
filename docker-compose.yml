@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ./schema:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tils -d tils"]
       interval: 5s
@@ -22,12 +22,19 @@ services:
       dockerfile: curios-manager/Dockerfile
     ports:
       - "50151:50151"
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50151"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
       GRPC_PORT: "50151"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
-      # LCP_SERVER_URL / LSD_SERVER_URL — set via .env when running with --profile lcp
+      NETWORK_GRPC: network-manager:50154
+      REGISTER_ADDRESS: curios-manager:50151
       LCP_SERVER_URL: ${LCP_SERVER_URL:-}
       LSD_SERVER_URL: ${LSD_SERVER_URL:-}
       LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-}
@@ -44,11 +51,19 @@ services:
       dockerfile: users-manager/Dockerfile
     ports:
       - "50152:50152"
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50152"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
       GRPC_PORT: "50152"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
+      NETWORK_GRPC: network-manager:50154
+      REGISTER_ADDRESS: users-manager:50152
     volumes:
       - node_identity:/data
     depends_on:
@@ -61,17 +76,56 @@ services:
       dockerfile: network-manager/Dockerfile
     ports:
       - "50153:50153"
+      # Internal port 50154 is NOT exposed to the host — Docker-private only.
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50154"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       DATABASE_URL: postgres://tils:tils@postgres:5432/tils
       GRPC_PORT: "50153"
+      INTERNAL_GRPC_PORT: "50154"
       NODE_KEY_PATH: /data/node.key
       NODE_PUBKEY_PATH: /data/node.pub
       NODE_CERT_PATH: /data/node.crt
-      CURIOS_GRPC: curios-manager:50151
+    volumes:
+      - node_identity:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    environment:
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
+      NETWORK_GRPC: network-manager:50154
+      # CURIOS_GRPC / USERS_GRPC are optional overrides; without them the frontend
+      # discovers services via network-manager's LocalDirectory (Lookup + WhoAmI).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/auth/callback/google}
+      LCP_SERVER_URL: ${LCP_SERVER_URL:-}
+      LSD_SERVER_URL: ${LSD_SERVER_URL:-}
+      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-}
     volumes:
       - node_identity:/data
     depends_on:
-      - curios-manager
+      network-manager:
+        condition: service_healthy
 
   # ─── Readium LCP / LSD — opt-in: docker compose --profile lcp up ────────────
   # The lcp-server image must be built from source:
@@ -107,32 +161,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
-      CURIOS_GRPC: curios-manager:50151
-      USERS_GRPC: users-manager:50152
-      NETWORK_GRPC: network-manager:50153
-      NODE_KEY_PATH: /data/node.key
-      NODE_CERT_PATH: /data/node.crt
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/auth/callback/google}
-      LCP_SERVER_URL: ${LCP_SERVER_URL:-}
-      LSD_SERVER_URL: ${LSD_SERVER_URL:-}
-      LSD_PUBLIC_URL: ${LSD_PUBLIC_URL:-}
-    volumes:
-      - node_identity:/data
-    depends_on:
-      - curios-manager
-      - users-manager
-      - network-manager
 
 volumes:
   pgdata:

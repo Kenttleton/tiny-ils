@@ -1353,6 +1353,66 @@ func (x *CopyList) GetCopies() []*PhysicalCopy {
 	return nil
 }
 
+type CreateCopyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CurioId       string                 `protobuf:"bytes,1,opt,name=curio_id,json=curioId,proto3" json:"curio_id,omitempty"`
+	Condition     string                 `protobuf:"bytes,2,opt,name=condition,proto3" json:"condition,omitempty"` // NEW | GOOD | FAIR | POOR | LOST; default GOOD
+	Location      string                 `protobuf:"bytes,3,opt,name=location,proto3" json:"location,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCopyRequest) Reset() {
+	*x = CreateCopyRequest{}
+	mi := &file_proto_curios_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCopyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCopyRequest) ProtoMessage() {}
+
+func (x *CreateCopyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_curios_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCopyRequest.ProtoReflect.Descriptor instead.
+func (*CreateCopyRequest) Descriptor() ([]byte, []int) {
+	return file_proto_curios_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CreateCopyRequest) GetCurioId() string {
+	if x != nil {
+		return x.CurioId
+	}
+	return ""
+}
+
+func (x *CreateCopyRequest) GetCondition() string {
+	if x != nil {
+		return x.Condition
+	}
+	return ""
+}
+
+func (x *CreateCopyRequest) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
 type CheckoutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CopyId        string                 `protobuf:"bytes,1,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`
@@ -1365,7 +1425,7 @@ type CheckoutRequest struct {
 
 func (x *CheckoutRequest) Reset() {
 	*x = CheckoutRequest{}
-	mi := &file_proto_curios_proto_msgTypes[19]
+	mi := &file_proto_curios_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1377,7 +1437,7 @@ func (x *CheckoutRequest) String() string {
 func (*CheckoutRequest) ProtoMessage() {}
 
 func (x *CheckoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[19]
+	mi := &file_proto_curios_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1390,7 +1450,7 @@ func (x *CheckoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckoutRequest.ProtoReflect.Descriptor instead.
 func (*CheckoutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{19}
+	return file_proto_curios_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CheckoutRequest) GetCopyId() string {
@@ -1430,7 +1490,7 @@ type ReturnRequest struct {
 
 func (x *ReturnRequest) Reset() {
 	*x = ReturnRequest{}
-	mi := &file_proto_curios_proto_msgTypes[20]
+	mi := &file_proto_curios_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1442,7 +1502,7 @@ func (x *ReturnRequest) String() string {
 func (*ReturnRequest) ProtoMessage() {}
 
 func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[20]
+	mi := &file_proto_curios_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1455,7 +1515,7 @@ func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnRequest.ProtoReflect.Descriptor instead.
 func (*ReturnRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{20}
+	return file_proto_curios_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ReturnRequest) GetCopyId() string {
@@ -1484,7 +1544,7 @@ type PhysicalLoan struct {
 
 func (x *PhysicalLoan) Reset() {
 	*x = PhysicalLoan{}
-	mi := &file_proto_curios_proto_msgTypes[21]
+	mi := &file_proto_curios_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1496,7 +1556,7 @@ func (x *PhysicalLoan) String() string {
 func (*PhysicalLoan) ProtoMessage() {}
 
 func (x *PhysicalLoan) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[21]
+	mi := &file_proto_curios_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1509,7 +1569,7 @@ func (x *PhysicalLoan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PhysicalLoan.ProtoReflect.Descriptor instead.
 func (*PhysicalLoan) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{21}
+	return file_proto_curios_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *PhysicalLoan) GetId() string {
@@ -1595,7 +1655,7 @@ type ListLoansRequest struct {
 
 func (x *ListLoansRequest) Reset() {
 	*x = ListLoansRequest{}
-	mi := &file_proto_curios_proto_msgTypes[22]
+	mi := &file_proto_curios_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1607,7 +1667,7 @@ func (x *ListLoansRequest) String() string {
 func (*ListLoansRequest) ProtoMessage() {}
 
 func (x *ListLoansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[22]
+	mi := &file_proto_curios_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1680,7 @@ func (x *ListLoansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLoansRequest.ProtoReflect.Descriptor instead.
 func (*ListLoansRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{22}
+	return file_proto_curios_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListLoansRequest) GetActiveOnly() bool {
@@ -1668,7 +1728,7 @@ type LoanList struct {
 
 func (x *LoanList) Reset() {
 	*x = LoanList{}
-	mi := &file_proto_curios_proto_msgTypes[23]
+	mi := &file_proto_curios_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1680,7 +1740,7 @@ func (x *LoanList) String() string {
 func (*LoanList) ProtoMessage() {}
 
 func (x *LoanList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[23]
+	mi := &file_proto_curios_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1693,7 +1753,7 @@ func (x *LoanList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoanList.ProtoReflect.Descriptor instead.
 func (*LoanList) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{23}
+	return file_proto_curios_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *LoanList) GetLoans() []*PhysicalLoan {
@@ -1721,7 +1781,7 @@ type ListLeasesRequest struct {
 
 func (x *ListLeasesRequest) Reset() {
 	*x = ListLeasesRequest{}
-	mi := &file_proto_curios_proto_msgTypes[24]
+	mi := &file_proto_curios_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1733,7 +1793,7 @@ func (x *ListLeasesRequest) String() string {
 func (*ListLeasesRequest) ProtoMessage() {}
 
 func (x *ListLeasesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[24]
+	mi := &file_proto_curios_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1746,7 +1806,7 @@ func (x *ListLeasesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLeasesRequest.ProtoReflect.Descriptor instead.
 func (*ListLeasesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{24}
+	return file_proto_curios_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListLeasesRequest) GetUserId() string {
@@ -1779,7 +1839,7 @@ type DigitalLeaseList struct {
 
 func (x *DigitalLeaseList) Reset() {
 	*x = DigitalLeaseList{}
-	mi := &file_proto_curios_proto_msgTypes[25]
+	mi := &file_proto_curios_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1791,7 +1851,7 @@ func (x *DigitalLeaseList) String() string {
 func (*DigitalLeaseList) ProtoMessage() {}
 
 func (x *DigitalLeaseList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[25]
+	mi := &file_proto_curios_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1804,7 +1864,7 @@ func (x *DigitalLeaseList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigitalLeaseList.ProtoReflect.Descriptor instead.
 func (*DigitalLeaseList) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{25}
+	return file_proto_curios_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *DigitalLeaseList) GetLeases() []*DigitalLease {
@@ -1825,7 +1885,7 @@ type HoldRequest struct {
 
 func (x *HoldRequest) Reset() {
 	*x = HoldRequest{}
-	mi := &file_proto_curios_proto_msgTypes[26]
+	mi := &file_proto_curios_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1837,7 +1897,7 @@ func (x *HoldRequest) String() string {
 func (*HoldRequest) ProtoMessage() {}
 
 func (x *HoldRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[26]
+	mi := &file_proto_curios_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1850,7 +1910,7 @@ func (x *HoldRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HoldRequest.ProtoReflect.Descriptor instead.
 func (*HoldRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{26}
+	return file_proto_curios_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *HoldRequest) GetCurioId() string {
@@ -1888,7 +1948,7 @@ type Hold struct {
 
 func (x *Hold) Reset() {
 	*x = Hold{}
-	mi := &file_proto_curios_proto_msgTypes[27]
+	mi := &file_proto_curios_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1900,7 +1960,7 @@ func (x *Hold) String() string {
 func (*Hold) ProtoMessage() {}
 
 func (x *Hold) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[27]
+	mi := &file_proto_curios_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1913,7 +1973,7 @@ func (x *Hold) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Hold.ProtoReflect.Descriptor instead.
 func (*Hold) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{27}
+	return file_proto_curios_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *Hold) GetId() string {
@@ -1975,7 +2035,7 @@ type DigitalAsset struct {
 
 func (x *DigitalAsset) Reset() {
 	*x = DigitalAsset{}
-	mi := &file_proto_curios_proto_msgTypes[28]
+	mi := &file_proto_curios_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1987,7 +2047,7 @@ func (x *DigitalAsset) String() string {
 func (*DigitalAsset) ProtoMessage() {}
 
 func (x *DigitalAsset) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[28]
+	mi := &file_proto_curios_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2000,7 +2060,7 @@ func (x *DigitalAsset) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigitalAsset.ProtoReflect.Descriptor instead.
 func (*DigitalAsset) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{28}
+	return file_proto_curios_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DigitalAsset) GetId() string {
@@ -2082,7 +2142,7 @@ type CreateDigitalAssetRequest struct {
 
 func (x *CreateDigitalAssetRequest) Reset() {
 	*x = CreateDigitalAssetRequest{}
-	mi := &file_proto_curios_proto_msgTypes[29]
+	mi := &file_proto_curios_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2094,7 +2154,7 @@ func (x *CreateDigitalAssetRequest) String() string {
 func (*CreateDigitalAssetRequest) ProtoMessage() {}
 
 func (x *CreateDigitalAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[29]
+	mi := &file_proto_curios_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2107,7 +2167,7 @@ func (x *CreateDigitalAssetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDigitalAssetRequest.ProtoReflect.Descriptor instead.
 func (*CreateDigitalAssetRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{29}
+	return file_proto_curios_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CreateDigitalAssetRequest) GetCurioId() string {
@@ -2178,7 +2238,7 @@ type LeaseRequest struct {
 
 func (x *LeaseRequest) Reset() {
 	*x = LeaseRequest{}
-	mi := &file_proto_curios_proto_msgTypes[30]
+	mi := &file_proto_curios_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2190,7 +2250,7 @@ func (x *LeaseRequest) String() string {
 func (*LeaseRequest) ProtoMessage() {}
 
 func (x *LeaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[30]
+	mi := &file_proto_curios_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2203,7 +2263,7 @@ func (x *LeaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaseRequest.ProtoReflect.Descriptor instead.
 func (*LeaseRequest) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{30}
+	return file_proto_curios_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *LeaseRequest) GetCurioId() string {
@@ -2251,7 +2311,7 @@ type DigitalLease struct {
 
 func (x *DigitalLease) Reset() {
 	*x = DigitalLease{}
-	mi := &file_proto_curios_proto_msgTypes[31]
+	mi := &file_proto_curios_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2263,7 +2323,7 @@ func (x *DigitalLease) String() string {
 func (*DigitalLease) ProtoMessage() {}
 
 func (x *DigitalLease) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_curios_proto_msgTypes[31]
+	mi := &file_proto_curios_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2276,7 +2336,7 @@ func (x *DigitalLease) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigitalLease.ProtoReflect.Descriptor instead.
 func (*DigitalLease) Descriptor() ([]byte, []int) {
-	return file_proto_curios_proto_rawDescGZIP(), []int{31}
+	return file_proto_curios_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DigitalLease) GetId() string {
@@ -2470,7 +2530,11 @@ const file_proto_curios_proto_rawDesc = "" +
 	"\fhome_node_id\x18\b \x01(\tR\n" +
 	"homeNodeId\"8\n" +
 	"\bCopyList\x12,\n" +
-	"\x06copies\x18\x01 \x03(\v2\x14.curios.PhysicalCopyR\x06copies\"\x80\x01\n" +
+	"\x06copies\x18\x01 \x03(\v2\x14.curios.PhysicalCopyR\x06copies\"h\n" +
+	"\x11CreateCopyRequest\x12\x19\n" +
+	"\bcurio_id\x18\x01 \x01(\tR\acurioId\x12\x1c\n" +
+	"\tcondition\x18\x02 \x01(\tR\tcondition\x12\x1a\n" +
+	"\blocation\x18\x03 \x01(\tR\blocation\"\x80\x01\n" +
 	"\x0fCheckoutRequest\x12\x17\n" +
 	"\acopy_id\x18\x01 \x01(\tR\x06copyId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12 \n" +
@@ -2565,7 +2629,7 @@ const file_proto_curios_proto_rawDesc = "" +
 	"expires_at\x18\a \x01(\x03R\texpiresAt\x12\x18\n" +
 	"\arevoked\x18\b \x01(\bR\arevoked\x12\x1f\n" +
 	"\vlicense_url\x18\t \x01(\tR\n" +
-	"licenseUrl2\x82\f\n" +
+	"licenseUrl2\xc1\f\n" +
 	"\rCuriosManager\x12:\n" +
 	"\n" +
 	"ListCurios\x12\x19.curios.ListCuriosRequest\x1a\x11.curios.CurioList\x12*\n" +
@@ -2575,7 +2639,9 @@ const file_proto_curios_proto_rawDesc = "" +
 	"\vDeleteCurio\x12\x0f.curios.CurioId\x1a\r.curios.Empty\x12>\n" +
 	"\x0eEnrichMetadata\x12\x15.curios.EnrichRequest\x1a\x15.curios.CurioMetadata\x12/\n" +
 	"\n" +
-	"ListCopies\x12\x0f.curios.CurioId\x1a\x10.curios.CopyList\x127\n" +
+	"ListCopies\x12\x0f.curios.CurioId\x1a\x10.curios.CopyList\x12=\n" +
+	"\n" +
+	"CreateCopy\x12\x19.curios.CreateCopyRequest\x1a\x14.curios.PhysicalCopy\x127\n" +
 	"\tListLoans\x12\x18.curios.ListLoansRequest\x1a\x10.curios.LoanList\x12=\n" +
 	"\fCheckoutCopy\x12\x17.curios.CheckoutRequest\x1a\x14.curios.PhysicalLoan\x129\n" +
 	"\n" +
@@ -2612,7 +2678,7 @@ func file_proto_curios_proto_rawDescGZIP() []byte {
 	return file_proto_curios_proto_rawDescData
 }
 
-var file_proto_curios_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_proto_curios_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_proto_curios_proto_goTypes = []any{
 	(*Empty)(nil),                     // 0: curios.Empty
 	(*CurioId)(nil),                   // 1: curios.CurioId
@@ -2633,26 +2699,27 @@ var file_proto_curios_proto_goTypes = []any{
 	(*CurioMetadata)(nil),             // 16: curios.CurioMetadata
 	(*PhysicalCopy)(nil),              // 17: curios.PhysicalCopy
 	(*CopyList)(nil),                  // 18: curios.CopyList
-	(*CheckoutRequest)(nil),           // 19: curios.CheckoutRequest
-	(*ReturnRequest)(nil),             // 20: curios.ReturnRequest
-	(*PhysicalLoan)(nil),              // 21: curios.PhysicalLoan
-	(*ListLoansRequest)(nil),          // 22: curios.ListLoansRequest
-	(*LoanList)(nil),                  // 23: curios.LoanList
-	(*ListLeasesRequest)(nil),         // 24: curios.ListLeasesRequest
-	(*DigitalLeaseList)(nil),          // 25: curios.DigitalLeaseList
-	(*HoldRequest)(nil),               // 26: curios.HoldRequest
-	(*Hold)(nil),                      // 27: curios.Hold
-	(*DigitalAsset)(nil),              // 28: curios.DigitalAsset
-	(*CreateDigitalAssetRequest)(nil), // 29: curios.CreateDigitalAssetRequest
-	(*LeaseRequest)(nil),              // 30: curios.LeaseRequest
-	(*DigitalLease)(nil),              // 31: curios.DigitalLease
+	(*CreateCopyRequest)(nil),         // 19: curios.CreateCopyRequest
+	(*CheckoutRequest)(nil),           // 20: curios.CheckoutRequest
+	(*ReturnRequest)(nil),             // 21: curios.ReturnRequest
+	(*PhysicalLoan)(nil),              // 22: curios.PhysicalLoan
+	(*ListLoansRequest)(nil),          // 23: curios.ListLoansRequest
+	(*LoanList)(nil),                  // 24: curios.LoanList
+	(*ListLeasesRequest)(nil),         // 25: curios.ListLeasesRequest
+	(*DigitalLeaseList)(nil),          // 26: curios.DigitalLeaseList
+	(*HoldRequest)(nil),               // 27: curios.HoldRequest
+	(*Hold)(nil),                      // 28: curios.Hold
+	(*DigitalAsset)(nil),              // 29: curios.DigitalAsset
+	(*CreateDigitalAssetRequest)(nil), // 30: curios.CreateDigitalAssetRequest
+	(*LeaseRequest)(nil),              // 31: curios.LeaseRequest
+	(*DigitalLease)(nil),              // 32: curios.DigitalLease
 }
 var file_proto_curios_proto_depIdxs = []int32{
 	8,  // 0: curios.TransferList.transfers:type_name -> curios.CopyTransfer
 	10, // 1: curios.CurioList.curios:type_name -> curios.Curio
 	17, // 2: curios.CopyList.copies:type_name -> curios.PhysicalCopy
-	21, // 3: curios.LoanList.loans:type_name -> curios.PhysicalLoan
-	31, // 4: curios.DigitalLeaseList.leases:type_name -> curios.DigitalLease
+	22, // 3: curios.LoanList.loans:type_name -> curios.PhysicalLoan
+	32, // 4: curios.DigitalLeaseList.leases:type_name -> curios.DigitalLease
 	12, // 5: curios.CuriosManager.ListCurios:input_type -> curios.ListCuriosRequest
 	1,  // 6: curios.CuriosManager.GetCurio:input_type -> curios.CurioId
 	13, // 7: curios.CuriosManager.CreateCurio:input_type -> curios.CreateCurioRequest
@@ -2660,53 +2727,55 @@ var file_proto_curios_proto_depIdxs = []int32{
 	1,  // 9: curios.CuriosManager.DeleteCurio:input_type -> curios.CurioId
 	15, // 10: curios.CuriosManager.EnrichMetadata:input_type -> curios.EnrichRequest
 	1,  // 11: curios.CuriosManager.ListCopies:input_type -> curios.CurioId
-	22, // 12: curios.CuriosManager.ListLoans:input_type -> curios.ListLoansRequest
-	19, // 13: curios.CuriosManager.CheckoutCopy:input_type -> curios.CheckoutRequest
-	20, // 14: curios.CuriosManager.ReturnCopy:input_type -> curios.ReturnRequest
-	26, // 15: curios.CuriosManager.PlaceHold:input_type -> curios.HoldRequest
-	2,  // 16: curios.CuriosManager.CancelHold:input_type -> curios.HoldId
-	1,  // 17: curios.CuriosManager.GetDigitalAsset:input_type -> curios.CurioId
-	29, // 18: curios.CuriosManager.CreateDigitalAsset:input_type -> curios.CreateDigitalAssetRequest
-	3,  // 19: curios.CuriosManager.GetLease:input_type -> curios.LeaseId
-	30, // 20: curios.CuriosManager.IssueLease:input_type -> curios.LeaseRequest
-	3,  // 21: curios.CuriosManager.RevokeLease:input_type -> curios.LeaseId
-	24, // 22: curios.CuriosManager.ListLeases:input_type -> curios.ListLeasesRequest
-	5,  // 23: curios.CuriosManager.RequestTransfer:input_type -> curios.TransferRequest
-	6,  // 24: curios.CuriosManager.ApproveTransfer:input_type -> curios.TransferAction
-	6,  // 25: curios.CuriosManager.RejectTransfer:input_type -> curios.TransferAction
-	6,  // 26: curios.CuriosManager.MarkShipped:input_type -> curios.TransferAction
-	6,  // 27: curios.CuriosManager.ConfirmReceived:input_type -> curios.TransferAction
-	6,  // 28: curios.CuriosManager.CancelTransfer:input_type -> curios.TransferAction
-	7,  // 29: curios.CuriosManager.ListTransfers:input_type -> curios.ListTransfersRequest
-	4,  // 30: curios.CuriosManager.GetTransfer:input_type -> curios.TransferId
-	11, // 31: curios.CuriosManager.ListCurios:output_type -> curios.CurioList
-	10, // 32: curios.CuriosManager.GetCurio:output_type -> curios.Curio
-	10, // 33: curios.CuriosManager.CreateCurio:output_type -> curios.Curio
-	10, // 34: curios.CuriosManager.UpdateCurio:output_type -> curios.Curio
-	0,  // 35: curios.CuriosManager.DeleteCurio:output_type -> curios.Empty
-	16, // 36: curios.CuriosManager.EnrichMetadata:output_type -> curios.CurioMetadata
-	18, // 37: curios.CuriosManager.ListCopies:output_type -> curios.CopyList
-	23, // 38: curios.CuriosManager.ListLoans:output_type -> curios.LoanList
-	21, // 39: curios.CuriosManager.CheckoutCopy:output_type -> curios.PhysicalLoan
-	21, // 40: curios.CuriosManager.ReturnCopy:output_type -> curios.PhysicalLoan
-	27, // 41: curios.CuriosManager.PlaceHold:output_type -> curios.Hold
-	0,  // 42: curios.CuriosManager.CancelHold:output_type -> curios.Empty
-	28, // 43: curios.CuriosManager.GetDigitalAsset:output_type -> curios.DigitalAsset
-	28, // 44: curios.CuriosManager.CreateDigitalAsset:output_type -> curios.DigitalAsset
-	31, // 45: curios.CuriosManager.GetLease:output_type -> curios.DigitalLease
-	31, // 46: curios.CuriosManager.IssueLease:output_type -> curios.DigitalLease
-	0,  // 47: curios.CuriosManager.RevokeLease:output_type -> curios.Empty
-	25, // 48: curios.CuriosManager.ListLeases:output_type -> curios.DigitalLeaseList
-	8,  // 49: curios.CuriosManager.RequestTransfer:output_type -> curios.CopyTransfer
-	8,  // 50: curios.CuriosManager.ApproveTransfer:output_type -> curios.CopyTransfer
-	8,  // 51: curios.CuriosManager.RejectTransfer:output_type -> curios.CopyTransfer
-	8,  // 52: curios.CuriosManager.MarkShipped:output_type -> curios.CopyTransfer
-	8,  // 53: curios.CuriosManager.ConfirmReceived:output_type -> curios.CopyTransfer
-	8,  // 54: curios.CuriosManager.CancelTransfer:output_type -> curios.CopyTransfer
-	9,  // 55: curios.CuriosManager.ListTransfers:output_type -> curios.TransferList
-	8,  // 56: curios.CuriosManager.GetTransfer:output_type -> curios.CopyTransfer
-	31, // [31:57] is the sub-list for method output_type
-	5,  // [5:31] is the sub-list for method input_type
+	19, // 12: curios.CuriosManager.CreateCopy:input_type -> curios.CreateCopyRequest
+	23, // 13: curios.CuriosManager.ListLoans:input_type -> curios.ListLoansRequest
+	20, // 14: curios.CuriosManager.CheckoutCopy:input_type -> curios.CheckoutRequest
+	21, // 15: curios.CuriosManager.ReturnCopy:input_type -> curios.ReturnRequest
+	27, // 16: curios.CuriosManager.PlaceHold:input_type -> curios.HoldRequest
+	2,  // 17: curios.CuriosManager.CancelHold:input_type -> curios.HoldId
+	1,  // 18: curios.CuriosManager.GetDigitalAsset:input_type -> curios.CurioId
+	30, // 19: curios.CuriosManager.CreateDigitalAsset:input_type -> curios.CreateDigitalAssetRequest
+	3,  // 20: curios.CuriosManager.GetLease:input_type -> curios.LeaseId
+	31, // 21: curios.CuriosManager.IssueLease:input_type -> curios.LeaseRequest
+	3,  // 22: curios.CuriosManager.RevokeLease:input_type -> curios.LeaseId
+	25, // 23: curios.CuriosManager.ListLeases:input_type -> curios.ListLeasesRequest
+	5,  // 24: curios.CuriosManager.RequestTransfer:input_type -> curios.TransferRequest
+	6,  // 25: curios.CuriosManager.ApproveTransfer:input_type -> curios.TransferAction
+	6,  // 26: curios.CuriosManager.RejectTransfer:input_type -> curios.TransferAction
+	6,  // 27: curios.CuriosManager.MarkShipped:input_type -> curios.TransferAction
+	6,  // 28: curios.CuriosManager.ConfirmReceived:input_type -> curios.TransferAction
+	6,  // 29: curios.CuriosManager.CancelTransfer:input_type -> curios.TransferAction
+	7,  // 30: curios.CuriosManager.ListTransfers:input_type -> curios.ListTransfersRequest
+	4,  // 31: curios.CuriosManager.GetTransfer:input_type -> curios.TransferId
+	11, // 32: curios.CuriosManager.ListCurios:output_type -> curios.CurioList
+	10, // 33: curios.CuriosManager.GetCurio:output_type -> curios.Curio
+	10, // 34: curios.CuriosManager.CreateCurio:output_type -> curios.Curio
+	10, // 35: curios.CuriosManager.UpdateCurio:output_type -> curios.Curio
+	0,  // 36: curios.CuriosManager.DeleteCurio:output_type -> curios.Empty
+	16, // 37: curios.CuriosManager.EnrichMetadata:output_type -> curios.CurioMetadata
+	18, // 38: curios.CuriosManager.ListCopies:output_type -> curios.CopyList
+	17, // 39: curios.CuriosManager.CreateCopy:output_type -> curios.PhysicalCopy
+	24, // 40: curios.CuriosManager.ListLoans:output_type -> curios.LoanList
+	22, // 41: curios.CuriosManager.CheckoutCopy:output_type -> curios.PhysicalLoan
+	22, // 42: curios.CuriosManager.ReturnCopy:output_type -> curios.PhysicalLoan
+	28, // 43: curios.CuriosManager.PlaceHold:output_type -> curios.Hold
+	0,  // 44: curios.CuriosManager.CancelHold:output_type -> curios.Empty
+	29, // 45: curios.CuriosManager.GetDigitalAsset:output_type -> curios.DigitalAsset
+	29, // 46: curios.CuriosManager.CreateDigitalAsset:output_type -> curios.DigitalAsset
+	32, // 47: curios.CuriosManager.GetLease:output_type -> curios.DigitalLease
+	32, // 48: curios.CuriosManager.IssueLease:output_type -> curios.DigitalLease
+	0,  // 49: curios.CuriosManager.RevokeLease:output_type -> curios.Empty
+	26, // 50: curios.CuriosManager.ListLeases:output_type -> curios.DigitalLeaseList
+	8,  // 51: curios.CuriosManager.RequestTransfer:output_type -> curios.CopyTransfer
+	8,  // 52: curios.CuriosManager.ApproveTransfer:output_type -> curios.CopyTransfer
+	8,  // 53: curios.CuriosManager.RejectTransfer:output_type -> curios.CopyTransfer
+	8,  // 54: curios.CuriosManager.MarkShipped:output_type -> curios.CopyTransfer
+	8,  // 55: curios.CuriosManager.ConfirmReceived:output_type -> curios.CopyTransfer
+	8,  // 56: curios.CuriosManager.CancelTransfer:output_type -> curios.CopyTransfer
+	9,  // 57: curios.CuriosManager.ListTransfers:output_type -> curios.TransferList
+	8,  // 58: curios.CuriosManager.GetTransfer:output_type -> curios.CopyTransfer
+	32, // [32:59] is the sub-list for method output_type
+	5,  // [5:32] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -2723,7 +2792,7 @@ func file_proto_curios_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_curios_proto_rawDesc), len(file_proto_curios_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -11,11 +11,38 @@ import (
 )
 
 type LoanStore struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	nodeID    string
+	serviceID uuid.UUID
 }
 
-func NewLoanStore(db *pgxpool.Pool) *LoanStore {
-	return &LoanStore{db: db}
+func NewLoanStore(db *pgxpool.Pool, nodeID string, serviceID uuid.UUID) *LoanStore {
+	return &LoanStore{db: db, nodeID: nodeID, serviceID: serviceID}
+}
+
+func (s *LoanStore) CreateCopy(ctx context.Context, curioID uuid.UUID, condition, location string) (*models.PhysicalCopy, error) {
+	if condition == "" {
+		condition = "GOOD"
+	}
+	c := &models.PhysicalCopy{
+		ID:         saltedID(s.serviceID),
+		CurioID:    curioID,
+		Condition:  models.CopyCondition(condition),
+		Location:   location,
+		NodeID:     s.nodeID,
+		HomeNodeID: s.nodeID,
+		Status:     models.CopyStatusAvailable,
+		CreatedAt:  time.Now(),
+	}
+	_, err := s.db.Exec(ctx,
+		`INSERT INTO physical_copies (id, curio_id, condition, location, node_id, home_node_id, status, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		c.ID, c.CurioID, string(c.Condition), c.Location, c.NodeID, c.HomeNodeID, string(c.Status), c.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create copy: %w", err)
+	}
+	return c, nil
 }
 
 func (s *LoanStore) ListCopies(ctx context.Context, curioID uuid.UUID) ([]*models.PhysicalCopy, error) {
@@ -129,7 +156,7 @@ func (s *LoanStore) Checkout(ctx context.Context, copyID, userID uuid.UUID, user
 	}
 
 	loan := &models.PhysicalLoan{
-		ID:             uuid.New(),
+		ID:             saltedID(s.serviceID),
 		CopyID:         copyID,
 		UserID:         userID,
 		UserNodeID:     userNodeID,
@@ -174,7 +201,7 @@ func (s *LoanStore) Return(ctx context.Context, copyID uuid.UUID) (*models.Physi
 
 func (s *LoanStore) PlaceHold(ctx context.Context, curioID, userID uuid.UUID, userNodeID string) (*models.Hold, error) {
 	hold := &models.Hold{
-		ID:       uuid.New(),
+		ID:       saltedID(s.serviceID),
 		CurioID:  curioID,
 		UserID:   userID,
 		PlacedAt: time.Now(),

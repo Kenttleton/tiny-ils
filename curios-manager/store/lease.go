@@ -11,11 +11,12 @@ import (
 )
 
 type LeaseStore struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	serviceID uuid.UUID
 }
 
-func NewLeaseStore(db *pgxpool.Pool) *LeaseStore {
-	return &LeaseStore{db: db}
+func NewLeaseStore(db *pgxpool.Pool, serviceID uuid.UUID) *LeaseStore {
+	return &LeaseStore{db: db, serviceID: serviceID}
 }
 
 // ─── Digital assets ───────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ func (s *LeaseStore) GetAsset(ctx context.Context, curioID uuid.UUID) (*models.D
 }
 
 func (s *LeaseStore) CreateAsset(ctx context.Context, a *models.DigitalAsset) (*models.DigitalAsset, error) {
-	a.ID = uuid.New()
+	a.ID = saltedID(s.serviceID)
 	_, err := s.db.Exec(ctx,
 		`INSERT INTO digital_assets
 		   (id, curio_id, format, file_ref, checksum, max_concurrent, lcp_content_id, storage_backend, encrypted)
@@ -80,7 +81,7 @@ func (s *LeaseStore) CountActiveLeases(ctx context.Context, assetID uuid.UUID) (
 
 func (s *LeaseStore) IssueLease(ctx context.Context, assetID, userID uuid.UUID, userNodeID string, accessToken string, expiresAt time.Time) (*models.DigitalLease, error) {
 	lease := &models.DigitalLease{
-		ID:          uuid.New(),
+		ID:          saltedID(s.serviceID),
 		AssetID:     assetID,
 		UserID:      userID,
 		UserNodeID:  userNodeID,

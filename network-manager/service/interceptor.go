@@ -50,6 +50,11 @@ var rpcTrust = map[string]TrustLevel{
 	"RevokeDigitalLease":     TrustConnected,
 	"InitiateRemoteTransfer": TrustConnected,
 	"NotifyTransferUpdate":   TrustConnected,
+	// ForwardTransfer and RelayTransferUpdate are internal-only (called by local
+	// curios-manager on the internal port which has no interceptor). They are NOT
+	// listed here so they default to TrustConnected on the external server —
+	// remote peers calling them would be rejected unless CONNECTED, and they
+	// would receive a routing error since these RPCs have no cross-node purpose.
 }
 
 // ServerTLSConfig returns a tls.Config for the network-manager gRPC server.

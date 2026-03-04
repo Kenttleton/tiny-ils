@@ -18,9 +18,11 @@ COPY gen/ ./gen/
 COPY curios-manager/ ./curios-manager/
 
 RUN CGO_ENABLED=0 go build -o /curios-manager ./curios-manager
+RUN CGO_ENABLED=0 GOWORK=off go install github.com/grpc-ecosystem/grpc-health-probe@latest
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /curios-manager /curios-manager
+COPY --from=builder /go/bin/grpc-health-probe /grpc-health-probe
 EXPOSE 50151
 ENTRYPOINT ["/curios-manager"]

@@ -1,0 +1,141 @@
+# Node B — isolated peer cluster for two-node local testing.
+#
+# Start with:  docker compose -f docker-compose.node-b.yml up --build
+# Stop with:   docker compose -f docker-compose.node-b.yml down
+# Full reset:  docker compose -f docker-compose.node-b.yml down -v
+#
+# Only network-b (host port 50163) and frontend-b (host port 3001) are
+# exposed to the host.  All other services are internal to this cluster.
+#
+# Cross-node peer addresses:
+#   To reach Node A from Node B admin UI: host.docker.internal:50153
+#   To reach Node B from Node A admin UI: host.docker.internal:50163
+
+services:
+  postgres-b:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tils
+      POSTGRES_USER: tils
+      POSTGRES_PASSWORD: tils
+    volumes:
+      - pgdata-b:/var/lib/postgresql/data
+      - ./schema:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tils -d tils"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  curios-b:
+    build:
+      context: .
+      dockerfile: curios-manager/Dockerfile
+    ports:
+      - "50161:50151"
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50151"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres-b:5432/tils
+      GRPC_PORT: "50151"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      NETWORK_GRPC: network-b:50154
+      REGISTER_ADDRESS: curios-b:50151
+      LCP_SERVER_URL: ""
+      LSD_SERVER_URL: ""
+      LSD_PUBLIC_URL: ""
+      LCP_PROVIDER_URL: ""
+    volumes:
+      - node_identity-b:/data
+    depends_on:
+      postgres-b:
+        condition: service_healthy
+
+  users-b:
+    build:
+      context: .
+      dockerfile: users-manager/Dockerfile
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50152"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres-b:5432/tils
+      GRPC_PORT: "50152"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      NETWORK_GRPC: network-b:50154
+      REGISTER_ADDRESS: users-b:50152
+    volumes:
+      - node_identity-b:/data
+    depends_on:
+      postgres-b:
+        condition: service_healthy
+
+  network-b:
+    build:
+      context: .
+      dockerfile: network-manager/Dockerfile
+    ports:
+      - "50163:50153"
+      # Internal port 50154 is NOT exposed to the host — Docker-private only.
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=:50154"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      DATABASE_URL: postgres://tils:tils@postgres-b:5432/tils
+      GRPC_PORT: "50153"
+      INTERNAL_GRPC_PORT: "50154"
+      NODE_KEY_PATH: /data/node.key
+      NODE_PUBKEY_PATH: /data/node.pub
+      NODE_CERT_PATH: /data/node.crt
+    volumes:
+      - node_identity-b:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres-b:
+        condition: service_healthy
+
+  frontend-b:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    environment:
+      ORIGIN: ${ORIGIN_B:-http://localhost:3001}
+      NETWORK_GRPC: network-b:50154
+      # CURIOS_GRPC / USERS_GRPC are optional overrides; without them the frontend
+      # discovers services via network-manager's LocalDirectory (Lookup + WhoAmI).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI_B:-http://localhost:3001/auth/callback/google}
+      LCP_SERVER_URL: ""
+      LSD_SERVER_URL: ""
+      LSD_PUBLIC_URL: ""
+    volumes:
+      - node_identity-b:/data
+    depends_on:
+      network-b:
+        condition: service_healthy
+
+volumes:
+  pgdata-b:
+  node_identity-b:

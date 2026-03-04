@@ -173,6 +173,27 @@ func (s *CuriosService) ListCopies(ctx context.Context, req *pb.CurioId) (*pb.Co
 	return &pb.CopyList{Copies: pbCopies}, nil
 }
 
+func (s *CuriosService) CreateCopy(ctx context.Context, req *pb.CreateCopyRequest) (*pb.PhysicalCopy, error) {
+	curioID, err := uuid.Parse(req.CurioId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid curio_id")
+	}
+	c, err := s.loans.CreateCopy(ctx, curioID, req.Condition, req.Location)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "create copy: %v", err)
+	}
+	return &pb.PhysicalCopy{
+		Id:         c.ID.String(),
+		CurioId:    c.CurioID.String(),
+		Condition:  string(c.Condition),
+		Location:   c.Location,
+		NodeId:     c.NodeID,
+		HomeNodeId: c.HomeNodeID,
+		Status:     string(c.Status),
+		CreatedAt:  c.CreatedAt.Unix(),
+	}, nil
+}
+
 func (s *CuriosService) ListLoans(ctx context.Context, req *pb.ListLoansRequest) (*pb.LoanList, error) {
 	limit := int(req.Limit)
 	if limit <= 0 {
