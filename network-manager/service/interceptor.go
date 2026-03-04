@@ -29,7 +29,8 @@ const (
 // rpcTrust maps RPC method names to the minimum TrustLevel required.
 var rpcTrust = map[string]TrustLevel{
 	// Fully public — no cert required.
-	"GetNodeInfo": TrustNone,
+	"GetNodeInfo":   TrustNone,
+	"GetNodeConfig": TrustNone, // frontend reads before setup/auth; grpc_address is not sensitive
 
 	// Any peer with a valid cert may register or search (PENDING is sufficient).
 	"RegisterPeer":  TrustCert,
@@ -50,6 +51,7 @@ var rpcTrust = map[string]TrustLevel{
 	"RevokeDigitalLease":     TrustConnected,
 	"InitiateRemoteTransfer": TrustConnected,
 	"NotifyTransferUpdate":   TrustConnected,
+	"SetNodeAddress":         TrustConnected, // internal-only; external port blocks external peers
 	// ForwardTransfer and RelayTransferUpdate are internal-only (called by local
 	// curios-manager on the internal port which has no interceptor). They are NOT
 	// listed here so they default to TrustConnected on the external server —
@@ -82,10 +84,16 @@ func PeerDialOptions(cert tls.Certificate) []grpc.DialOption {
 	}
 }
 
+// peerLookup is the interface the trust interceptor needs from the peer store.
+// *store.PeerStore satisfies this interface via duck typing.
+type peerLookup interface {
+	GetByPublicKey(ctx context.Context, pubKeyB64 string) (*store.Peer, error)
+}
+
 // TrustInterceptor enforces per-RPC trust based on the caller's mTLS cert.
 // selfPubKeyB64 is this node's own base64-encoded public key; a caller
 // presenting the own-node cert (the local BFF) is granted TrustConnected.
-func TrustInterceptor(peers *store.PeerStore, selfPubKeyB64 string) grpc.UnaryServerInterceptor {
+func TrustInterceptor(peers peerLookup, selfPubKeyB64 string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		name := rpcName(info.FullMethod)
 		required, ok := rpcTrust[name]
@@ -105,7 +113,7 @@ func TrustInterceptor(peers *store.PeerStore, selfPubKeyB64 string) grpc.UnarySe
 }
 
 // TrustStreamInterceptor is the streaming equivalent of TrustInterceptor.
-func TrustStreamInterceptor(peers *store.PeerStore, selfPubKeyB64 string) grpc.StreamServerInterceptor {
+func TrustStreamInterceptor(peers peerLookup, selfPubKeyB64 string) grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		name := rpcName(info.FullMethod)
 		required, ok := rpcTrust[name]
@@ -143,7 +151,7 @@ func clientCert(ctx context.Context) *x509.Certificate {
 // resolveTrust determines the trust level of the caller based on their cert.
 // A caller presenting this node's own public key (i.e. the local BFF) is
 // granted TrustConnected without a peers table lookup.
-func resolveTrust(ctx context.Context, peers *store.PeerStore, cert *x509.Certificate, selfPubKeyB64 string) TrustLevel {
+func resolveTrust(ctx context.Context, peers peerLookup, cert *x509.Certificate, selfPubKeyB64 string) TrustLevel {
 	if cert == nil {
 		return TrustNone
 	}

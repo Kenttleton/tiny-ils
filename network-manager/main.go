@@ -54,8 +54,13 @@ func main() {
 	defer pool.Close()
 
 	peerStore := store.NewPeerStore(pool)
+	settings := store.NewSettingsStore(pool)
 	registry := service.NewLocalDirectoryService()
-	svc := service.NewNetworkService(peerStore, nodeID, pubKey, privKey, nodeCert, registry)
+
+	externalPort := envOr("GRPC_PORT", "50153")
+	selfAddr := detectOrLoadAddress(ctx, settings, externalPort)
+
+	svc := service.NewNetworkService(peerStore, settings, nodeID, pubKey, privKey, nodeCert, registry, selfAddr)
 
 	// ─── Internal server (Docker-private, no auth) ────────────────────────────
 	// Hosts LocalDirectory (service registration + lookup) and NetworkManager
@@ -77,7 +82,6 @@ func main() {
 	}()
 
 	// ─── External server (mTLS, host-exposed, peer-to-peer only) ─────────────
-	externalPort := envOr("GRPC_PORT", "50153")
 	externalLis, err := net.Listen("tcp", fmt.Sprintf(":%s", externalPort))
 	if err != nil {
 		log.Fatalf("external listen: %v", err)
@@ -104,6 +108,69 @@ func main() {
 	if err := externalSrv.Serve(externalLis); err != nil {
 		log.Fatalf("serve: %v", err)
 	}
+}
+
+// detectOrLoadAddress returns the gRPC address to advertise to peers.
+// Admin-persisted value in app_settings wins; falls back to interface enumeration.
+func detectOrLoadAddress(ctx context.Context, settings *store.SettingsStore, port string) string {
+	if addr, err := settings.Get(ctx, "grpc_address"); err == nil && addr != "" {
+		log.Printf("network-manager grpc address (from db): %s", addr)
+		return addr
+	}
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Printf("warning: enumerate interfaces: %v", err)
+		return ""
+	}
+
+	var private string
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, a := range addrs {
+			var ip net.IP
+			switch v := a.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil || ip.IsLoopback() || ip.To4() == nil {
+				continue
+			}
+			addr := fmt.Sprintf("%s:%s", ip.String(), port)
+			if !isRFC1918(ip) {
+				log.Printf("network-manager grpc address (auto-detected, public): %s", addr)
+				return addr
+			}
+			if private == "" {
+				private = addr
+			}
+		}
+	}
+
+	if private != "" {
+		log.Printf("network-manager grpc address (auto-detected, private): %s", private)
+		return private
+	}
+	log.Printf("warning: could not auto-detect grpc address; configure via admin settings")
+	return ""
+}
+
+func isRFC1918(ip net.IP) bool {
+	for _, cidr := range []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"} {
+		_, block, _ := net.ParseCIDR(cidr)
+		if block.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 func envOr(key, def string) string {

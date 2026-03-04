@@ -245,6 +245,94 @@ func (x *PeerAck) GetCapabilities() []string {
 	return nil
 }
 
+type NodeAddress struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeAddress) Reset() {
+	*x = NodeAddress{}
+	mi := &file_proto_network_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeAddress) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeAddress) ProtoMessage() {}
+
+func (x *NodeAddress) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeAddress.ProtoReflect.Descriptor instead.
+func (*NodeAddress) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *NodeAddress) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+type NodeConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GrpcAddress   string                 `protobuf:"bytes,1,opt,name=grpc_address,json=grpcAddress,proto3" json:"grpc_address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeConfig) Reset() {
+	*x = NodeConfig{}
+	mi := &file_proto_network_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeConfig) ProtoMessage() {}
+
+func (x *NodeConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_network_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeConfig.ProtoReflect.Descriptor instead.
+func (*NodeConfig) Descriptor() ([]byte, []int) {
+	return file_proto_network_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *NodeConfig) GetGrpcAddress() string {
+	if x != nil {
+		return x.GrpcAddress
+	}
+	return ""
+}
+
 type PeerList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Peers         []*PeerInfo            `protobuf:"bytes,1,rep,name=peers,proto3" json:"peers,omitempty"`
@@ -254,7 +342,7 @@ type PeerList struct {
 
 func (x *PeerList) Reset() {
 	*x = PeerList{}
-	mi := &file_proto_network_proto_msgTypes[4]
+	mi := &file_proto_network_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +354,7 @@ func (x *PeerList) String() string {
 func (*PeerList) ProtoMessage() {}
 
 func (x *PeerList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[4]
+	mi := &file_proto_network_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +367,7 @@ func (x *PeerList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerList.ProtoReflect.Descriptor instead.
 func (*PeerList) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{4}
+	return file_proto_network_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PeerList) GetPeers() []*PeerInfo {
@@ -305,7 +393,7 @@ type CurioSummary struct {
 
 func (x *CurioSummary) Reset() {
 	*x = CurioSummary{}
-	mi := &file_proto_network_proto_msgTypes[5]
+	mi := &file_proto_network_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +405,7 @@ func (x *CurioSummary) String() string {
 func (*CurioSummary) ProtoMessage() {}
 
 func (x *CurioSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[5]
+	mi := &file_proto_network_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +418,7 @@ func (x *CurioSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CurioSummary.ProtoReflect.Descriptor instead.
 func (*CurioSummary) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{5}
+	return file_proto_network_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CurioSummary) GetId() string {
@@ -400,7 +488,7 @@ type CatalogSnapshot struct {
 
 func (x *CatalogSnapshot) Reset() {
 	*x = CatalogSnapshot{}
-	mi := &file_proto_network_proto_msgTypes[6]
+	mi := &file_proto_network_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +500,7 @@ func (x *CatalogSnapshot) String() string {
 func (*CatalogSnapshot) ProtoMessage() {}
 
 func (x *CatalogSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[6]
+	mi := &file_proto_network_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +513,7 @@ func (x *CatalogSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CatalogSnapshot.ProtoReflect.Descriptor instead.
 func (*CatalogSnapshot) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{6}
+	return file_proto_network_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CatalogSnapshot) GetNodeId() string {
@@ -458,7 +546,7 @@ type SyncAck struct {
 
 func (x *SyncAck) Reset() {
 	*x = SyncAck{}
-	mi := &file_proto_network_proto_msgTypes[7]
+	mi := &file_proto_network_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -470,7 +558,7 @@ func (x *SyncAck) String() string {
 func (*SyncAck) ProtoMessage() {}
 
 func (x *SyncAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[7]
+	mi := &file_proto_network_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -483,7 +571,7 @@ func (x *SyncAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncAck.ProtoReflect.Descriptor instead.
 func (*SyncAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{7}
+	return file_proto_network_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SyncAck) GetReceived() int32 {
@@ -505,7 +593,7 @@ type NetworkSearchRequest struct {
 
 func (x *NetworkSearchRequest) Reset() {
 	*x = NetworkSearchRequest{}
-	mi := &file_proto_network_proto_msgTypes[8]
+	mi := &file_proto_network_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -517,7 +605,7 @@ func (x *NetworkSearchRequest) String() string {
 func (*NetworkSearchRequest) ProtoMessage() {}
 
 func (x *NetworkSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[8]
+	mi := &file_proto_network_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -530,7 +618,7 @@ func (x *NetworkSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkSearchRequest.ProtoReflect.Descriptor instead.
 func (*NetworkSearchRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{8}
+	return file_proto_network_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *NetworkSearchRequest) GetQuery() string {
@@ -574,7 +662,7 @@ type NetworkSearchResult struct {
 
 func (x *NetworkSearchResult) Reset() {
 	*x = NetworkSearchResult{}
-	mi := &file_proto_network_proto_msgTypes[9]
+	mi := &file_proto_network_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -586,7 +674,7 @@ func (x *NetworkSearchResult) String() string {
 func (*NetworkSearchResult) ProtoMessage() {}
 
 func (x *NetworkSearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[9]
+	mi := &file_proto_network_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +687,7 @@ func (x *NetworkSearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkSearchResult.ProtoReflect.Descriptor instead.
 func (*NetworkSearchResult) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{9}
+	return file_proto_network_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *NetworkSearchResult) GetNodeId() string {
@@ -643,7 +731,7 @@ type BorrowRequest struct {
 
 func (x *BorrowRequest) Reset() {
 	*x = BorrowRequest{}
-	mi := &file_proto_network_proto_msgTypes[10]
+	mi := &file_proto_network_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +743,7 @@ func (x *BorrowRequest) String() string {
 func (*BorrowRequest) ProtoMessage() {}
 
 func (x *BorrowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[10]
+	mi := &file_proto_network_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +756,7 @@ func (x *BorrowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowRequest.ProtoReflect.Descriptor instead.
 func (*BorrowRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{10}
+	return file_proto_network_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BorrowRequest) GetCurioId() string {
@@ -720,7 +808,7 @@ type BorrowResponse struct {
 
 func (x *BorrowResponse) Reset() {
 	*x = BorrowResponse{}
-	mi := &file_proto_network_proto_msgTypes[11]
+	mi := &file_proto_network_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -732,7 +820,7 @@ func (x *BorrowResponse) String() string {
 func (*BorrowResponse) ProtoMessage() {}
 
 func (x *BorrowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[11]
+	mi := &file_proto_network_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -745,7 +833,7 @@ func (x *BorrowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowResponse.ProtoReflect.Descriptor instead.
 func (*BorrowResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{11}
+	return file_proto_network_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *BorrowResponse) GetLoanId() string {
@@ -801,7 +889,7 @@ type ReturnRequest struct {
 
 func (x *ReturnRequest) Reset() {
 	*x = ReturnRequest{}
-	mi := &file_proto_network_proto_msgTypes[12]
+	mi := &file_proto_network_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -813,7 +901,7 @@ func (x *ReturnRequest) String() string {
 func (*ReturnRequest) ProtoMessage() {}
 
 func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[12]
+	mi := &file_proto_network_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -826,7 +914,7 @@ func (x *ReturnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnRequest.ProtoReflect.Descriptor instead.
 func (*ReturnRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{12}
+	return file_proto_network_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ReturnRequest) GetLoanId() string {
@@ -859,7 +947,7 @@ type ReturnResponse struct {
 
 func (x *ReturnResponse) Reset() {
 	*x = ReturnResponse{}
-	mi := &file_proto_network_proto_msgTypes[13]
+	mi := &file_proto_network_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -871,7 +959,7 @@ func (x *ReturnResponse) String() string {
 func (*ReturnResponse) ProtoMessage() {}
 
 func (x *ReturnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[13]
+	mi := &file_proto_network_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -884,7 +972,7 @@ func (x *ReturnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnResponse.ProtoReflect.Descriptor instead.
 func (*ReturnResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{13}
+	return file_proto_network_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ReturnResponse) GetReturnedAt() int64 {
@@ -910,7 +998,7 @@ type RemoteTransferRequest struct {
 
 func (x *RemoteTransferRequest) Reset() {
 	*x = RemoteTransferRequest{}
-	mi := &file_proto_network_proto_msgTypes[14]
+	mi := &file_proto_network_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -922,7 +1010,7 @@ func (x *RemoteTransferRequest) String() string {
 func (*RemoteTransferRequest) ProtoMessage() {}
 
 func (x *RemoteTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[14]
+	mi := &file_proto_network_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -935,7 +1023,7 @@ func (x *RemoteTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteTransferRequest.ProtoReflect.Descriptor instead.
 func (*RemoteTransferRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{14}
+	return file_proto_network_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RemoteTransferRequest) GetTransferId() string {
@@ -1004,7 +1092,7 @@ type RemoteTransferAck struct {
 
 func (x *RemoteTransferAck) Reset() {
 	*x = RemoteTransferAck{}
-	mi := &file_proto_network_proto_msgTypes[15]
+	mi := &file_proto_network_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1016,7 +1104,7 @@ func (x *RemoteTransferAck) String() string {
 func (*RemoteTransferAck) ProtoMessage() {}
 
 func (x *RemoteTransferAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[15]
+	mi := &file_proto_network_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1029,7 +1117,7 @@ func (x *RemoteTransferAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteTransferAck.ProtoReflect.Descriptor instead.
 func (*RemoteTransferAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{15}
+	return file_proto_network_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RemoteTransferAck) GetTransferId() string {
@@ -1058,7 +1146,7 @@ type TransferUpdate struct {
 
 func (x *TransferUpdate) Reset() {
 	*x = TransferUpdate{}
-	mi := &file_proto_network_proto_msgTypes[16]
+	mi := &file_proto_network_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1070,7 +1158,7 @@ func (x *TransferUpdate) String() string {
 func (*TransferUpdate) ProtoMessage() {}
 
 func (x *TransferUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[16]
+	mi := &file_proto_network_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1083,7 +1171,7 @@ func (x *TransferUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferUpdate.ProtoReflect.Descriptor instead.
 func (*TransferUpdate) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{16}
+	return file_proto_network_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TransferUpdate) GetTransferId() string {
@@ -1123,7 +1211,7 @@ type UserToken struct {
 
 func (x *UserToken) Reset() {
 	*x = UserToken{}
-	mi := &file_proto_network_proto_msgTypes[17]
+	mi := &file_proto_network_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1135,7 +1223,7 @@ func (x *UserToken) String() string {
 func (*UserToken) ProtoMessage() {}
 
 func (x *UserToken) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[17]
+	mi := &file_proto_network_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1148,7 +1236,7 @@ func (x *UserToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserToken.ProtoReflect.Descriptor instead.
 func (*UserToken) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{17}
+	return file_proto_network_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UserToken) GetJwt() string {
@@ -1171,7 +1259,7 @@ type VerificationResult struct {
 
 func (x *VerificationResult) Reset() {
 	*x = VerificationResult{}
-	mi := &file_proto_network_proto_msgTypes[18]
+	mi := &file_proto_network_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1183,7 +1271,7 @@ func (x *VerificationResult) String() string {
 func (*VerificationResult) ProtoMessage() {}
 
 func (x *VerificationResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[18]
+	mi := &file_proto_network_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1196,7 +1284,7 @@ func (x *VerificationResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerificationResult.ProtoReflect.Descriptor instead.
 func (*VerificationResult) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{18}
+	return file_proto_network_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *VerificationResult) GetValid() bool {
@@ -1246,7 +1334,7 @@ type GuestTokenRequest struct {
 
 func (x *GuestTokenRequest) Reset() {
 	*x = GuestTokenRequest{}
-	mi := &file_proto_network_proto_msgTypes[19]
+	mi := &file_proto_network_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1258,7 +1346,7 @@ func (x *GuestTokenRequest) String() string {
 func (*GuestTokenRequest) ProtoMessage() {}
 
 func (x *GuestTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[19]
+	mi := &file_proto_network_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1271,7 +1359,7 @@ func (x *GuestTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GuestTokenRequest.ProtoReflect.Descriptor instead.
 func (*GuestTokenRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{19}
+	return file_proto_network_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GuestTokenRequest) GetUserId() string {
@@ -1298,7 +1386,7 @@ type GuestTokenResponse struct {
 
 func (x *GuestTokenResponse) Reset() {
 	*x = GuestTokenResponse{}
-	mi := &file_proto_network_proto_msgTypes[20]
+	mi := &file_proto_network_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1310,7 +1398,7 @@ func (x *GuestTokenResponse) String() string {
 func (*GuestTokenResponse) ProtoMessage() {}
 
 func (x *GuestTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[20]
+	mi := &file_proto_network_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1323,7 +1411,7 @@ func (x *GuestTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GuestTokenResponse.ProtoReflect.Descriptor instead.
 func (*GuestTokenResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{20}
+	return file_proto_network_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GuestTokenResponse) GetToken() string {
@@ -1354,7 +1442,7 @@ type AuthenticateGuestRequest struct {
 
 func (x *AuthenticateGuestRequest) Reset() {
 	*x = AuthenticateGuestRequest{}
-	mi := &file_proto_network_proto_msgTypes[21]
+	mi := &file_proto_network_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1366,7 +1454,7 @@ func (x *AuthenticateGuestRequest) String() string {
 func (*AuthenticateGuestRequest) ProtoMessage() {}
 
 func (x *AuthenticateGuestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[21]
+	mi := &file_proto_network_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1379,7 +1467,7 @@ func (x *AuthenticateGuestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthenticateGuestRequest.ProtoReflect.Descriptor instead.
 func (*AuthenticateGuestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{21}
+	return file_proto_network_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AuthenticateGuestRequest) GetUserId() string {
@@ -1413,7 +1501,7 @@ type AuthenticateGuestResponse struct {
 
 func (x *AuthenticateGuestResponse) Reset() {
 	*x = AuthenticateGuestResponse{}
-	mi := &file_proto_network_proto_msgTypes[22]
+	mi := &file_proto_network_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1425,7 +1513,7 @@ func (x *AuthenticateGuestResponse) String() string {
 func (*AuthenticateGuestResponse) ProtoMessage() {}
 
 func (x *AuthenticateGuestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[22]
+	mi := &file_proto_network_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1438,7 +1526,7 @@ func (x *AuthenticateGuestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthenticateGuestResponse.ProtoReflect.Descriptor instead.
 func (*AuthenticateGuestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{22}
+	return file_proto_network_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AuthenticateGuestResponse) GetToken() string {
@@ -1467,7 +1555,7 @@ type UserLoansRequest struct {
 
 func (x *UserLoansRequest) Reset() {
 	*x = UserLoansRequest{}
-	mi := &file_proto_network_proto_msgTypes[23]
+	mi := &file_proto_network_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1479,7 +1567,7 @@ func (x *UserLoansRequest) String() string {
 func (*UserLoansRequest) ProtoMessage() {}
 
 func (x *UserLoansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[23]
+	mi := &file_proto_network_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1492,7 +1580,7 @@ func (x *UserLoansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoansRequest.ProtoReflect.Descriptor instead.
 func (*UserLoansRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{23}
+	return file_proto_network_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UserLoansRequest) GetUserId() string {
@@ -1535,7 +1623,7 @@ type RemoteLoan struct {
 
 func (x *RemoteLoan) Reset() {
 	*x = RemoteLoan{}
-	mi := &file_proto_network_proto_msgTypes[24]
+	mi := &file_proto_network_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1547,7 +1635,7 @@ func (x *RemoteLoan) String() string {
 func (*RemoteLoan) ProtoMessage() {}
 
 func (x *RemoteLoan) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[24]
+	mi := &file_proto_network_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1560,7 +1648,7 @@ func (x *RemoteLoan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteLoan.ProtoReflect.Descriptor instead.
 func (*RemoteLoan) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{24}
+	return file_proto_network_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RemoteLoan) GetLoanId() string {
@@ -1645,7 +1733,7 @@ type UserLoansResult struct {
 
 func (x *UserLoansResult) Reset() {
 	*x = UserLoansResult{}
-	mi := &file_proto_network_proto_msgTypes[25]
+	mi := &file_proto_network_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1657,7 +1745,7 @@ func (x *UserLoansResult) String() string {
 func (*UserLoansResult) ProtoMessage() {}
 
 func (x *UserLoansResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[25]
+	mi := &file_proto_network_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1670,7 +1758,7 @@ func (x *UserLoansResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoansResult.ProtoReflect.Descriptor instead.
 func (*UserLoansResult) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{25}
+	return file_proto_network_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *UserLoansResult) GetNodeId() string {
@@ -1712,7 +1800,7 @@ type DigitalLeaseRequest struct {
 
 func (x *DigitalLeaseRequest) Reset() {
 	*x = DigitalLeaseRequest{}
-	mi := &file_proto_network_proto_msgTypes[26]
+	mi := &file_proto_network_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1724,7 +1812,7 @@ func (x *DigitalLeaseRequest) String() string {
 func (*DigitalLeaseRequest) ProtoMessage() {}
 
 func (x *DigitalLeaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[26]
+	mi := &file_proto_network_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1737,7 +1825,7 @@ func (x *DigitalLeaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigitalLeaseRequest.ProtoReflect.Descriptor instead.
 func (*DigitalLeaseRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{26}
+	return file_proto_network_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *DigitalLeaseRequest) GetCurioId() string {
@@ -1773,7 +1861,7 @@ type DigitalLeaseResponse struct {
 
 func (x *DigitalLeaseResponse) Reset() {
 	*x = DigitalLeaseResponse{}
-	mi := &file_proto_network_proto_msgTypes[27]
+	mi := &file_proto_network_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1785,7 +1873,7 @@ func (x *DigitalLeaseResponse) String() string {
 func (*DigitalLeaseResponse) ProtoMessage() {}
 
 func (x *DigitalLeaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[27]
+	mi := &file_proto_network_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1798,7 +1886,7 @@ func (x *DigitalLeaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigitalLeaseResponse.ProtoReflect.Descriptor instead.
 func (*DigitalLeaseResponse) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{27}
+	return file_proto_network_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DigitalLeaseResponse) GetLeaseId() string {
@@ -1839,7 +1927,7 @@ type LeaseRef struct {
 
 func (x *LeaseRef) Reset() {
 	*x = LeaseRef{}
-	mi := &file_proto_network_proto_msgTypes[28]
+	mi := &file_proto_network_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1851,7 +1939,7 @@ func (x *LeaseRef) String() string {
 func (*LeaseRef) ProtoMessage() {}
 
 func (x *LeaseRef) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[28]
+	mi := &file_proto_network_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1864,7 +1952,7 @@ func (x *LeaseRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaseRef.ProtoReflect.Descriptor instead.
 func (*LeaseRef) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{28}
+	return file_proto_network_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *LeaseRef) GetLeaseId() string {
@@ -1894,7 +1982,7 @@ type ForwardTransferRequest struct {
 
 func (x *ForwardTransferRequest) Reset() {
 	*x = ForwardTransferRequest{}
-	mi := &file_proto_network_proto_msgTypes[29]
+	mi := &file_proto_network_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1906,7 +1994,7 @@ func (x *ForwardTransferRequest) String() string {
 func (*ForwardTransferRequest) ProtoMessage() {}
 
 func (x *ForwardTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[29]
+	mi := &file_proto_network_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1919,7 +2007,7 @@ func (x *ForwardTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardTransferRequest.ProtoReflect.Descriptor instead.
 func (*ForwardTransferRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{29}
+	return file_proto_network_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ForwardTransferRequest) GetTargetNodeId() string {
@@ -1946,7 +2034,7 @@ type ForwardTransferAck struct {
 
 func (x *ForwardTransferAck) Reset() {
 	*x = ForwardTransferAck{}
-	mi := &file_proto_network_proto_msgTypes[30]
+	mi := &file_proto_network_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1958,7 +2046,7 @@ func (x *ForwardTransferAck) String() string {
 func (*ForwardTransferAck) ProtoMessage() {}
 
 func (x *ForwardTransferAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[30]
+	mi := &file_proto_network_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1971,7 +2059,7 @@ func (x *ForwardTransferAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardTransferAck.ProtoReflect.Descriptor instead.
 func (*ForwardTransferAck) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{30}
+	return file_proto_network_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ForwardTransferAck) GetTransferId() string {
@@ -2001,7 +2089,7 @@ type RelayTransferUpdateRequest struct {
 
 func (x *RelayTransferUpdateRequest) Reset() {
 	*x = RelayTransferUpdateRequest{}
-	mi := &file_proto_network_proto_msgTypes[31]
+	mi := &file_proto_network_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2013,7 +2101,7 @@ func (x *RelayTransferUpdateRequest) String() string {
 func (*RelayTransferUpdateRequest) ProtoMessage() {}
 
 func (x *RelayTransferUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_network_proto_msgTypes[31]
+	mi := &file_proto_network_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2026,7 +2114,7 @@ func (x *RelayTransferUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RelayTransferUpdateRequest.ProtoReflect.Descriptor instead.
 func (*RelayTransferUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_proto_network_proto_rawDescGZIP(), []int{31}
+	return file_proto_network_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RelayTransferUpdateRequest) GetTargetNodeId() string {
@@ -2063,7 +2151,12 @@ const file_proto_network_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\"\n" +
-	"\fcapabilities\x18\x03 \x03(\tR\fcapabilities\"3\n" +
+	"\fcapabilities\x18\x03 \x03(\tR\fcapabilities\"'\n" +
+	"\vNodeAddress\x12\x18\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"/\n" +
+	"\n" +
+	"NodeConfig\x12!\n" +
+	"\fgrpc_address\x18\x01 \x01(\tR\vgrpcAddress\"3\n" +
 	"\bPeerList\x12'\n" +
 	"\x05peers\x18\x01 \x03(\v2\x11.network.PeerInfoR\x05peers\"\xdc\x01\n" +
 	"\fCurioSummary\x12\x0e\n" +
@@ -2212,12 +2305,13 @@ const file_proto_network_proto_rawDesc = "" +
 	"\baccepted\x18\x02 \x01(\bR\baccepted\"s\n" +
 	"\x1aRelayTransferUpdateRequest\x12$\n" +
 	"\x0etarget_node_id\x18\x01 \x01(\tR\ftargetNodeId\x12/\n" +
-	"\x06update\x18\x02 \x01(\v2\x17.network.TransferUpdateR\x06update2\xd5\n" +
-	"\n" +
+	"\x06update\x18\x02 \x01(\v2\x17.network.TransferUpdateR\x06update2\xc3\v\n" +
 	"\x0eNetworkManager\x12/\n" +
 	"\vGetNodeInfo\x12\x0e.network.Empty\x1a\x10.network.PeerAck\x123\n" +
 	"\fRegisterPeer\x12\x11.network.PeerInfo\x1a\x10.network.PeerAck\x12.\n" +
-	"\tListPeers\x12\x0e.network.Empty\x1a\x11.network.PeerList\x122\n" +
+	"\tListPeers\x12\x0e.network.Empty\x1a\x11.network.PeerList\x124\n" +
+	"\rGetNodeConfig\x12\x0e.network.Empty\x1a\x13.network.NodeConfig\x126\n" +
+	"\x0eSetNodeAddress\x12\x14.network.NodeAddress\x1a\x0e.network.Empty\x122\n" +
 	"\vConnectPeer\x12\x11.network.PeerInfo\x1a\x10.network.PeerAck\x12.\n" +
 	"\vApprovePeer\x12\x0f.network.NodeId\x1a\x0e.network.Empty\x12N\n" +
 	"\rSearchNetwork\x12\x1d.network.NetworkSearchRequest\x1a\x1c.network.NetworkSearchResult0\x01\x12L\n" +
@@ -2249,90 +2343,96 @@ func file_proto_network_proto_rawDescGZIP() []byte {
 	return file_proto_network_proto_rawDescData
 }
 
-var file_proto_network_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_proto_network_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_proto_network_proto_goTypes = []any{
 	(*Empty)(nil),                      // 0: network.Empty
 	(*PeerInfo)(nil),                   // 1: network.PeerInfo
 	(*NodeId)(nil),                     // 2: network.NodeId
 	(*PeerAck)(nil),                    // 3: network.PeerAck
-	(*PeerList)(nil),                   // 4: network.PeerList
-	(*CurioSummary)(nil),               // 5: network.CurioSummary
-	(*CatalogSnapshot)(nil),            // 6: network.CatalogSnapshot
-	(*SyncAck)(nil),                    // 7: network.SyncAck
-	(*NetworkSearchRequest)(nil),       // 8: network.NetworkSearchRequest
-	(*NetworkSearchResult)(nil),        // 9: network.NetworkSearchResult
-	(*BorrowRequest)(nil),              // 10: network.BorrowRequest
-	(*BorrowResponse)(nil),             // 11: network.BorrowResponse
-	(*ReturnRequest)(nil),              // 12: network.ReturnRequest
-	(*ReturnResponse)(nil),             // 13: network.ReturnResponse
-	(*RemoteTransferRequest)(nil),      // 14: network.RemoteTransferRequest
-	(*RemoteTransferAck)(nil),          // 15: network.RemoteTransferAck
-	(*TransferUpdate)(nil),             // 16: network.TransferUpdate
-	(*UserToken)(nil),                  // 17: network.UserToken
-	(*VerificationResult)(nil),         // 18: network.VerificationResult
-	(*GuestTokenRequest)(nil),          // 19: network.GuestTokenRequest
-	(*GuestTokenResponse)(nil),         // 20: network.GuestTokenResponse
-	(*AuthenticateGuestRequest)(nil),   // 21: network.AuthenticateGuestRequest
-	(*AuthenticateGuestResponse)(nil),  // 22: network.AuthenticateGuestResponse
-	(*UserLoansRequest)(nil),           // 23: network.UserLoansRequest
-	(*RemoteLoan)(nil),                 // 24: network.RemoteLoan
-	(*UserLoansResult)(nil),            // 25: network.UserLoansResult
-	(*DigitalLeaseRequest)(nil),        // 26: network.DigitalLeaseRequest
-	(*DigitalLeaseResponse)(nil),       // 27: network.DigitalLeaseResponse
-	(*LeaseRef)(nil),                   // 28: network.LeaseRef
-	(*ForwardTransferRequest)(nil),     // 29: network.ForwardTransferRequest
-	(*ForwardTransferAck)(nil),         // 30: network.ForwardTransferAck
-	(*RelayTransferUpdateRequest)(nil), // 31: network.RelayTransferUpdateRequest
+	(*NodeAddress)(nil),                // 4: network.NodeAddress
+	(*NodeConfig)(nil),                 // 5: network.NodeConfig
+	(*PeerList)(nil),                   // 6: network.PeerList
+	(*CurioSummary)(nil),               // 7: network.CurioSummary
+	(*CatalogSnapshot)(nil),            // 8: network.CatalogSnapshot
+	(*SyncAck)(nil),                    // 9: network.SyncAck
+	(*NetworkSearchRequest)(nil),       // 10: network.NetworkSearchRequest
+	(*NetworkSearchResult)(nil),        // 11: network.NetworkSearchResult
+	(*BorrowRequest)(nil),              // 12: network.BorrowRequest
+	(*BorrowResponse)(nil),             // 13: network.BorrowResponse
+	(*ReturnRequest)(nil),              // 14: network.ReturnRequest
+	(*ReturnResponse)(nil),             // 15: network.ReturnResponse
+	(*RemoteTransferRequest)(nil),      // 16: network.RemoteTransferRequest
+	(*RemoteTransferAck)(nil),          // 17: network.RemoteTransferAck
+	(*TransferUpdate)(nil),             // 18: network.TransferUpdate
+	(*UserToken)(nil),                  // 19: network.UserToken
+	(*VerificationResult)(nil),         // 20: network.VerificationResult
+	(*GuestTokenRequest)(nil),          // 21: network.GuestTokenRequest
+	(*GuestTokenResponse)(nil),         // 22: network.GuestTokenResponse
+	(*AuthenticateGuestRequest)(nil),   // 23: network.AuthenticateGuestRequest
+	(*AuthenticateGuestResponse)(nil),  // 24: network.AuthenticateGuestResponse
+	(*UserLoansRequest)(nil),           // 25: network.UserLoansRequest
+	(*RemoteLoan)(nil),                 // 26: network.RemoteLoan
+	(*UserLoansResult)(nil),            // 27: network.UserLoansResult
+	(*DigitalLeaseRequest)(nil),        // 28: network.DigitalLeaseRequest
+	(*DigitalLeaseResponse)(nil),       // 29: network.DigitalLeaseResponse
+	(*LeaseRef)(nil),                   // 30: network.LeaseRef
+	(*ForwardTransferRequest)(nil),     // 31: network.ForwardTransferRequest
+	(*ForwardTransferAck)(nil),         // 32: network.ForwardTransferAck
+	(*RelayTransferUpdateRequest)(nil), // 33: network.RelayTransferUpdateRequest
 }
 var file_proto_network_proto_depIdxs = []int32{
 	1,  // 0: network.PeerList.peers:type_name -> network.PeerInfo
-	5,  // 1: network.CatalogSnapshot.curios:type_name -> network.CurioSummary
-	5,  // 2: network.NetworkSearchResult.curios:type_name -> network.CurioSummary
-	24, // 3: network.UserLoansResult.loans:type_name -> network.RemoteLoan
-	14, // 4: network.ForwardTransferRequest.request:type_name -> network.RemoteTransferRequest
-	16, // 5: network.RelayTransferUpdateRequest.update:type_name -> network.TransferUpdate
+	7,  // 1: network.CatalogSnapshot.curios:type_name -> network.CurioSummary
+	7,  // 2: network.NetworkSearchResult.curios:type_name -> network.CurioSummary
+	26, // 3: network.UserLoansResult.loans:type_name -> network.RemoteLoan
+	16, // 4: network.ForwardTransferRequest.request:type_name -> network.RemoteTransferRequest
+	18, // 5: network.RelayTransferUpdateRequest.update:type_name -> network.TransferUpdate
 	0,  // 6: network.NetworkManager.GetNodeInfo:input_type -> network.Empty
 	1,  // 7: network.NetworkManager.RegisterPeer:input_type -> network.PeerInfo
 	0,  // 8: network.NetworkManager.ListPeers:input_type -> network.Empty
-	1,  // 9: network.NetworkManager.ConnectPeer:input_type -> network.PeerInfo
-	2,  // 10: network.NetworkManager.ApprovePeer:input_type -> network.NodeId
-	8,  // 11: network.NetworkManager.SearchNetwork:input_type -> network.NetworkSearchRequest
-	8,  // 12: network.NetworkManager.SearchCatalog:input_type -> network.NetworkSearchRequest
-	6,  // 13: network.NetworkManager.ShareCatalog:input_type -> network.CatalogSnapshot
-	10, // 14: network.NetworkManager.RequestBorrow:input_type -> network.BorrowRequest
-	12, // 15: network.NetworkManager.ReturnCurio:input_type -> network.ReturnRequest
-	17, // 16: network.NetworkManager.VerifyUser:input_type -> network.UserToken
-	19, // 17: network.NetworkManager.IssueGuestToken:input_type -> network.GuestTokenRequest
-	21, // 18: network.NetworkManager.AuthenticateGuest:input_type -> network.AuthenticateGuestRequest
-	23, // 19: network.NetworkManager.GetUserLoans:input_type -> network.UserLoansRequest
-	26, // 20: network.NetworkManager.RequestDigitalLease:input_type -> network.DigitalLeaseRequest
-	28, // 21: network.NetworkManager.RevokeDigitalLease:input_type -> network.LeaseRef
-	14, // 22: network.NetworkManager.InitiateRemoteTransfer:input_type -> network.RemoteTransferRequest
-	16, // 23: network.NetworkManager.NotifyTransferUpdate:input_type -> network.TransferUpdate
-	29, // 24: network.NetworkManager.ForwardTransfer:input_type -> network.ForwardTransferRequest
-	31, // 25: network.NetworkManager.RelayTransferUpdate:input_type -> network.RelayTransferUpdateRequest
-	3,  // 26: network.NetworkManager.GetNodeInfo:output_type -> network.PeerAck
-	3,  // 27: network.NetworkManager.RegisterPeer:output_type -> network.PeerAck
-	4,  // 28: network.NetworkManager.ListPeers:output_type -> network.PeerList
-	3,  // 29: network.NetworkManager.ConnectPeer:output_type -> network.PeerAck
-	0,  // 30: network.NetworkManager.ApprovePeer:output_type -> network.Empty
-	9,  // 31: network.NetworkManager.SearchNetwork:output_type -> network.NetworkSearchResult
-	9,  // 32: network.NetworkManager.SearchCatalog:output_type -> network.NetworkSearchResult
-	7,  // 33: network.NetworkManager.ShareCatalog:output_type -> network.SyncAck
-	11, // 34: network.NetworkManager.RequestBorrow:output_type -> network.BorrowResponse
-	13, // 35: network.NetworkManager.ReturnCurio:output_type -> network.ReturnResponse
-	18, // 36: network.NetworkManager.VerifyUser:output_type -> network.VerificationResult
-	20, // 37: network.NetworkManager.IssueGuestToken:output_type -> network.GuestTokenResponse
-	22, // 38: network.NetworkManager.AuthenticateGuest:output_type -> network.AuthenticateGuestResponse
-	25, // 39: network.NetworkManager.GetUserLoans:output_type -> network.UserLoansResult
-	27, // 40: network.NetworkManager.RequestDigitalLease:output_type -> network.DigitalLeaseResponse
-	0,  // 41: network.NetworkManager.RevokeDigitalLease:output_type -> network.Empty
-	15, // 42: network.NetworkManager.InitiateRemoteTransfer:output_type -> network.RemoteTransferAck
-	0,  // 43: network.NetworkManager.NotifyTransferUpdate:output_type -> network.Empty
-	30, // 44: network.NetworkManager.ForwardTransfer:output_type -> network.ForwardTransferAck
-	0,  // 45: network.NetworkManager.RelayTransferUpdate:output_type -> network.Empty
-	26, // [26:46] is the sub-list for method output_type
-	6,  // [6:26] is the sub-list for method input_type
+	0,  // 9: network.NetworkManager.GetNodeConfig:input_type -> network.Empty
+	4,  // 10: network.NetworkManager.SetNodeAddress:input_type -> network.NodeAddress
+	1,  // 11: network.NetworkManager.ConnectPeer:input_type -> network.PeerInfo
+	2,  // 12: network.NetworkManager.ApprovePeer:input_type -> network.NodeId
+	10, // 13: network.NetworkManager.SearchNetwork:input_type -> network.NetworkSearchRequest
+	10, // 14: network.NetworkManager.SearchCatalog:input_type -> network.NetworkSearchRequest
+	8,  // 15: network.NetworkManager.ShareCatalog:input_type -> network.CatalogSnapshot
+	12, // 16: network.NetworkManager.RequestBorrow:input_type -> network.BorrowRequest
+	14, // 17: network.NetworkManager.ReturnCurio:input_type -> network.ReturnRequest
+	19, // 18: network.NetworkManager.VerifyUser:input_type -> network.UserToken
+	21, // 19: network.NetworkManager.IssueGuestToken:input_type -> network.GuestTokenRequest
+	23, // 20: network.NetworkManager.AuthenticateGuest:input_type -> network.AuthenticateGuestRequest
+	25, // 21: network.NetworkManager.GetUserLoans:input_type -> network.UserLoansRequest
+	28, // 22: network.NetworkManager.RequestDigitalLease:input_type -> network.DigitalLeaseRequest
+	30, // 23: network.NetworkManager.RevokeDigitalLease:input_type -> network.LeaseRef
+	16, // 24: network.NetworkManager.InitiateRemoteTransfer:input_type -> network.RemoteTransferRequest
+	18, // 25: network.NetworkManager.NotifyTransferUpdate:input_type -> network.TransferUpdate
+	31, // 26: network.NetworkManager.ForwardTransfer:input_type -> network.ForwardTransferRequest
+	33, // 27: network.NetworkManager.RelayTransferUpdate:input_type -> network.RelayTransferUpdateRequest
+	3,  // 28: network.NetworkManager.GetNodeInfo:output_type -> network.PeerAck
+	3,  // 29: network.NetworkManager.RegisterPeer:output_type -> network.PeerAck
+	6,  // 30: network.NetworkManager.ListPeers:output_type -> network.PeerList
+	5,  // 31: network.NetworkManager.GetNodeConfig:output_type -> network.NodeConfig
+	0,  // 32: network.NetworkManager.SetNodeAddress:output_type -> network.Empty
+	3,  // 33: network.NetworkManager.ConnectPeer:output_type -> network.PeerAck
+	0,  // 34: network.NetworkManager.ApprovePeer:output_type -> network.Empty
+	11, // 35: network.NetworkManager.SearchNetwork:output_type -> network.NetworkSearchResult
+	11, // 36: network.NetworkManager.SearchCatalog:output_type -> network.NetworkSearchResult
+	9,  // 37: network.NetworkManager.ShareCatalog:output_type -> network.SyncAck
+	13, // 38: network.NetworkManager.RequestBorrow:output_type -> network.BorrowResponse
+	15, // 39: network.NetworkManager.ReturnCurio:output_type -> network.ReturnResponse
+	20, // 40: network.NetworkManager.VerifyUser:output_type -> network.VerificationResult
+	22, // 41: network.NetworkManager.IssueGuestToken:output_type -> network.GuestTokenResponse
+	24, // 42: network.NetworkManager.AuthenticateGuest:output_type -> network.AuthenticateGuestResponse
+	27, // 43: network.NetworkManager.GetUserLoans:output_type -> network.UserLoansResult
+	29, // 44: network.NetworkManager.RequestDigitalLease:output_type -> network.DigitalLeaseResponse
+	0,  // 45: network.NetworkManager.RevokeDigitalLease:output_type -> network.Empty
+	17, // 46: network.NetworkManager.InitiateRemoteTransfer:output_type -> network.RemoteTransferAck
+	0,  // 47: network.NetworkManager.NotifyTransferUpdate:output_type -> network.Empty
+	32, // 48: network.NetworkManager.ForwardTransfer:output_type -> network.ForwardTransferAck
+	0,  // 49: network.NetworkManager.RelayTransferUpdate:output_type -> network.Empty
+	28, // [28:50] is the sub-list for method output_type
+	6,  // [6:28] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -2349,7 +2449,7 @@ func file_proto_network_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_network_proto_rawDesc), len(file_proto_network_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

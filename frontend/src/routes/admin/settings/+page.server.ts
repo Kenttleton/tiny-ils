@@ -1,12 +1,19 @@
 import { fail } from '@sveltejs/kit';
-import { getUsersClient, call, grpcMessage } from '$lib/server/grpc/clients';
+import { getUsersClient, getNetworkClient, call, grpcMessage } from '$lib/server/grpc/clients';
 import { getPublicUrl, getAllowLocalhost, applyConfigUpdate } from '$lib/server/config';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
+	const nodeConfig = await call<{ grpc_address: string }>(
+		getNetworkClient(),
+		'GetNodeConfig',
+		{}
+	).catch(() => ({ grpc_address: '' }));
+
 	return {
 		publicUrl: getPublicUrl(),
-		allowLocalhost: getAllowLocalhost()
+		allowLocalhost: getAllowLocalhost(),
+		grpcAddress: nodeConfig.grpc_address ?? ''
 	};
 };
 
@@ -15,9 +22,10 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const publicUrl = String(data.get('publicUrl') ?? '').trim().replace(/\/$/, '');
 		const allowLocalhost = data.get('allowLocalhost') === 'true';
+		const grpcAddress = String(data.get('grpcAddress') ?? '').trim();
 
 		if (!publicUrl) {
-			return fail(400, { error: 'Public URL is required.', allowLocalhost });
+			return fail(400, { error: 'Public URL is required.', allowLocalhost, grpcAddress });
 		}
 
 		try {
@@ -28,9 +36,18 @@ export const actions: Actions = {
 			// Apply immediately to the in-process cache so the change takes effect
 			// without requiring a server restart.
 			applyConfigUpdate(publicUrl, allowLocalhost);
-			return { success: true, publicUrl, allowLocalhost };
 		} catch (err) {
-			return fail(400, { error: grpcMessage(err), allowLocalhost });
+			return fail(400, { error: grpcMessage(err), allowLocalhost, grpcAddress });
 		}
+
+		if (grpcAddress) {
+			try {
+				await call(getNetworkClient(), 'SetNodeAddress', { address: grpcAddress });
+			} catch (err) {
+				return fail(400, { error: grpcMessage(err), allowLocalhost, grpcAddress });
+			}
+		}
+
+		return { success: true, publicUrl, allowLocalhost, grpcAddress };
 	}
 };

@@ -24,26 +24,50 @@ import (
 	"tiny-ils/shared/identity"
 )
 
+// peerStore is the interface NetworkService needs from the peer store.
+// *store.PeerStore satisfies this interface via duck typing.
+type peerStore interface {
+	Upsert(ctx context.Context, p *store.Peer) error
+	UpsertInbound(ctx context.Context, p *store.Peer) (string, error)
+	Approve(ctx context.Context, nodeID string) error
+	List(ctx context.Context) ([]*store.Peer, error)
+	ListConnectedWithCapability(ctx context.Context, capability string) ([]*store.Peer, error)
+	Get(ctx context.Context, nodeID string) (*store.Peer, error)
+	GetPublicKey(ctx context.Context, nodeID string) (string, error)
+}
+
+// nodeSettings is the interface the service needs from the settings store.
+// *store.SettingsStore satisfies this interface via duck typing.
+type nodeSettings interface {
+	Get(ctx context.Context, key string) (string, error)
+	Set(ctx context.Context, key, value string) error
+}
+
 type NetworkService struct {
 	pb.UnimplementedNetworkManagerServer
-	peers     *store.PeerStore
+	peers     peerStore
+	settings  nodeSettings
 	nodeID    string
 	pubKey    ed25519.PublicKey
 	privKey   ed25519.PrivateKey
 	pubKeyB64 string
 	nodeCert  tls.Certificate
 	registry  *LocalDirectoryService
+	selfAddr  string
+	mu        sync.RWMutex
 }
 
-func NewNetworkService(peers *store.PeerStore, nodeID string, pub ed25519.PublicKey, priv ed25519.PrivateKey, nodeCert tls.Certificate, registry *LocalDirectoryService) *NetworkService {
+func NewNetworkService(peers peerStore, settings nodeSettings, nodeID string, pub ed25519.PublicKey, priv ed25519.PrivateKey, nodeCert tls.Certificate, registry *LocalDirectoryService, selfAddr string) *NetworkService {
 	return &NetworkService{
 		peers:     peers,
+		settings:  settings,
 		nodeID:    nodeID,
 		pubKey:    pub,
 		privKey:   priv,
 		pubKeyB64: base64.StdEncoding.EncodeToString(pub),
 		nodeCert:  nodeCert,
 		registry:  registry,
+		selfAddr:  selfAddr,
 	}
 }
 
@@ -54,6 +78,28 @@ func (s *NetworkService) firstCuriosSvc() curiospb.CuriosManagerClient {
 		return nil
 	}
 	return svcs[0].client
+}
+
+// ─── Node configuration ───────────────────────────────────────────────────────
+
+func (s *NetworkService) GetNodeConfig(_ context.Context, _ *pb.Empty) (*pb.NodeConfig, error) {
+	s.mu.RLock()
+	addr := s.selfAddr
+	s.mu.RUnlock()
+	return &pb.NodeConfig{GrpcAddress: addr}, nil
+}
+
+func (s *NetworkService) SetNodeAddress(ctx context.Context, req *pb.NodeAddress) (*pb.Empty, error) {
+	if req.Address == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "address is required")
+	}
+	s.mu.Lock()
+	s.selfAddr = req.Address
+	s.mu.Unlock()
+	if err := s.settings.Set(ctx, "grpc_address", req.Address); err != nil {
+		return nil, status.Errorf(codes.Internal, "persist grpc_address: %v", err)
+	}
+	return &pb.Empty{}, nil
 }
 
 // ─── Peer registry ───────────────────────────────────────────────────────────
@@ -618,10 +664,13 @@ func (s *NetworkService) callRemoteRegister(address string) (*pb.PeerAck, error)
 	}
 	defer conn.Close()
 	client := pb.NewNetworkManagerClient(conn)
+	s.mu.RLock()
+	selfAddr := s.selfAddr
+	s.mu.RUnlock()
 	return client.RegisterPeer(ctx, &pb.PeerInfo{
 		NodeId:       s.nodeID,
 		PublicKey:    s.pubKeyB64,
-		Address:      "", // remote cannot call back via this field; use address stored at registration
+		Address:      selfAddr,
 		Capabilities: s.registry.Capabilities(),
 	})
 }

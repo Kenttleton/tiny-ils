@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { getUsersClient, call, grpcMessage } from '$lib/server/grpc/clients';
+import { getUsersClient, getNetworkClient, call, grpcMessage } from '$lib/server/grpc/clients';
 import { setAuthCookie } from '$lib/server/auth';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -12,7 +12,14 @@ export const load: PageServerLoad = async ({ request }) => {
 		request.headers.get('host') ??
 		'localhost:3000';
 	const detectedUrl = `${proto}://${host}`;
-	return { detectedPublicUrl: detectedUrl };
+
+	const nodeConfig = await call<{ grpc_address: string }>(
+		getNetworkClient(),
+		'GetNodeConfig',
+		{}
+	).catch(() => ({ grpc_address: '' }));
+
+	return { detectedPublicUrl: detectedUrl, detectedGrpcAddress: nodeConfig.grpc_address ?? '' };
 };
 
 export const actions: Actions = {
@@ -23,8 +30,9 @@ export const actions: Actions = {
 		const password = String(data.get('password') ?? '');
 		const confirm = String(data.get('confirm') ?? '');
 		const publicUrl = String(data.get('publicUrl') ?? '').trim().replace(/\/$/, '');
+		const grpcAddress = String(data.get('grpcAddress') ?? '').trim();
 
-		const values = { email, displayName, publicUrl };
+		const values = { email, displayName, publicUrl, grpcAddress };
 
 		if (!email || !password) {
 			return fail(400, { error: 'Email and password are required.', ...values });
@@ -47,6 +55,12 @@ export const actions: Actions = {
 				public_url: publicUrl
 			});
 			setAuthCookie(cookies, res.token, locals.nodeId);
+
+			if (grpcAddress) {
+				await call(getNetworkClient(), 'SetNodeAddress', { address: grpcAddress }).catch(
+					() => {} // non-fatal — admin can correct in settings
+				);
+			}
 		} catch (err) {
 			return fail(400, { error: grpcMessage(err), ...values });
 		}

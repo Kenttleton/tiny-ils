@@ -4,18 +4,22 @@ import type { PeerList } from '$lib/api';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const [nodeInfo, peerData] = await Promise.all([
+	const [nodeInfo, nodeConfig, peerData] = await Promise.all([
 		call<{ node_id: string; public_key: string; capabilities: string[] }>(
 			getNetworkClient(),
 			'GetNodeInfo',
 			{}
 		).catch(() => ({ node_id: '', public_key: '', capabilities: [] as string[] })),
+		call<{ grpc_address: string }>(getNetworkClient(), 'GetNodeConfig', {}).catch(() => ({
+			grpc_address: ''
+		})),
 		call<PeerList>(getNetworkClient(), 'ListPeers', {}).catch(() => ({ peers: [] } as PeerList))
 	]);
 	return {
 		nodeId: nodeInfo.node_id,
 		publicKey: nodeInfo.public_key,
 		capabilities: nodeInfo.capabilities ?? [],
+		grpcAddress: nodeConfig.grpc_address ?? '',
 		peers: peerData.peers ?? []
 	};
 };

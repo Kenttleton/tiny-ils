@@ -5,15 +5,19 @@
 
 	let copiedId = $state(false);
 	let copiedKey = $state(false);
+	let copiedAddr = $state(false);
 
-	function copy(text: string, which: 'id' | 'key') {
+	function copy(text: string, which: 'id' | 'key' | 'addr') {
 		navigator.clipboard.writeText(text).then(() => {
 			if (which === 'id') {
 				copiedId = true;
 				setTimeout(() => (copiedId = false), 1500);
-			} else {
+			} else if (which === 'key') {
 				copiedKey = true;
 				setTimeout(() => (copiedKey = false), 1500);
+			} else {
+				copiedAddr = true;
+				setTimeout(() => (copiedAddr = false), 1500);
 			}
 		});
 	}
@@ -57,6 +61,17 @@
 			{#if data.publicKey}
 				<button class="btn-copy" onclick={() => copy(data.publicKey, 'key')}>
 					{copiedKey ? 'Copied!' : 'Copy'}
+				</button>
+			{/if}
+		</div>
+		<div class="identity-row">
+			<div class="identity-field">
+				<span class="field-label">Peer address</span>
+				<code class="field-value">{data.grpcAddress || '—'}</code>
+			</div>
+			{#if data.grpcAddress}
+				<button class="btn-copy" onclick={() => copy(data.grpcAddress, 'addr')}>
+					{copiedAddr ? 'Copied!' : 'Copy'}
 				</button>
 			{/if}
 		</div>

@@ -29,6 +29,14 @@ message PeerAck {
   repeated string capabilities = 3; // capabilities this node offers
 }
 
+message NodeAddress {
+  string address = 1;
+}
+
+message NodeConfig {
+  string grpc_address = 1;
+}
+
 message PeerList {
   repeated PeerInfo peers = 1;
 }
@@ -249,6 +257,10 @@ service NetworkManager {
   rpc GetNodeInfo(Empty) returns (PeerAck);
   rpc RegisterPeer(PeerInfo) returns (PeerAck);
   rpc ListPeers(Empty) returns (PeerList);
+
+  // Node configuration (internal-only)
+  rpc GetNodeConfig(Empty)        returns (NodeConfig);  // read current grpc address
+  rpc SetNodeAddress(NodeAddress) returns (Empty);        // admin override
 
   // Admin-initiated peer management (local BFF only)
   rpc ConnectPeer(PeerInfo) returns (PeerAck);    // outbound: store + call remote RegisterPeer

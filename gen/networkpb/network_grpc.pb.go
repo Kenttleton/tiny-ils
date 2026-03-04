@@ -22,6 +22,8 @@ const (
 	NetworkManager_GetNodeInfo_FullMethodName            = "/network.NetworkManager/GetNodeInfo"
 	NetworkManager_RegisterPeer_FullMethodName           = "/network.NetworkManager/RegisterPeer"
 	NetworkManager_ListPeers_FullMethodName              = "/network.NetworkManager/ListPeers"
+	NetworkManager_GetNodeConfig_FullMethodName          = "/network.NetworkManager/GetNodeConfig"
+	NetworkManager_SetNodeAddress_FullMethodName         = "/network.NetworkManager/SetNodeAddress"
 	NetworkManager_ConnectPeer_FullMethodName            = "/network.NetworkManager/ConnectPeer"
 	NetworkManager_ApprovePeer_FullMethodName            = "/network.NetworkManager/ApprovePeer"
 	NetworkManager_SearchNetwork_FullMethodName          = "/network.NetworkManager/SearchNetwork"
@@ -49,6 +51,9 @@ type NetworkManagerClient interface {
 	GetNodeInfo(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerAck, error)
 	RegisterPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error)
 	ListPeers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerList, error)
+	// Node configuration (internal-only)
+	GetNodeConfig(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NodeConfig, error)
+	SetNodeAddress(ctx context.Context, in *NodeAddress, opts ...grpc.CallOption) (*Empty, error)
 	// Admin-initiated peer management (local BFF only)
 	ConnectPeer(ctx context.Context, in *PeerInfo, opts ...grpc.CallOption) (*PeerAck, error)
 	ApprovePeer(ctx context.Context, in *NodeId, opts ...grpc.CallOption) (*Empty, error)
@@ -120,6 +125,26 @@ func (c *networkManagerClient) ListPeers(ctx context.Context, in *Empty, opts ..
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PeerList)
 	err := c.cc.Invoke(ctx, NetworkManager_ListPeers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) GetNodeConfig(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NodeConfig, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NodeConfig)
+	err := c.cc.Invoke(ctx, NetworkManager_GetNodeConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkManagerClient) SetNodeAddress(ctx context.Context, in *NodeAddress, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, NetworkManager_SetNodeAddress_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -322,6 +347,9 @@ type NetworkManagerServer interface {
 	GetNodeInfo(context.Context, *Empty) (*PeerAck, error)
 	RegisterPeer(context.Context, *PeerInfo) (*PeerAck, error)
 	ListPeers(context.Context, *Empty) (*PeerList, error)
+	// Node configuration (internal-only)
+	GetNodeConfig(context.Context, *Empty) (*NodeConfig, error)
+	SetNodeAddress(context.Context, *NodeAddress) (*Empty, error)
 	// Admin-initiated peer management (local BFF only)
 	ConnectPeer(context.Context, *PeerInfo) (*PeerAck, error)
 	ApprovePeer(context.Context, *NodeId) (*Empty, error)
@@ -377,6 +405,12 @@ func (UnimplementedNetworkManagerServer) RegisterPeer(context.Context, *PeerInfo
 }
 func (UnimplementedNetworkManagerServer) ListPeers(context.Context, *Empty) (*PeerList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPeers not implemented")
+}
+func (UnimplementedNetworkManagerServer) GetNodeConfig(context.Context, *Empty) (*NodeConfig, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNodeConfig not implemented")
+}
+func (UnimplementedNetworkManagerServer) SetNodeAddress(context.Context, *NodeAddress) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetNodeAddress not implemented")
 }
 func (UnimplementedNetworkManagerServer) ConnectPeer(context.Context, *PeerInfo) (*PeerAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method ConnectPeer not implemented")
@@ -500,6 +534,42 @@ func _NetworkManager_ListPeers_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NetworkManagerServer).ListPeers(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_GetNodeConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).GetNodeConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_GetNodeConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).GetNodeConfig(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkManager_SetNodeAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NodeAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkManagerServer).SetNodeAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkManager_SetNodeAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkManagerServer).SetNodeAddress(ctx, req.(*NodeAddress))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -814,6 +884,14 @@ var NetworkManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPeers",
 			Handler:    _NetworkManager_ListPeers_Handler,
+		},
+		{
+			MethodName: "GetNodeConfig",
+			Handler:    _NetworkManager_GetNodeConfig_Handler,
+		},
+		{
+			MethodName: "SetNodeAddress",
+			Handler:    _NetworkManager_SetNodeAddress_Handler,
 		},
 		{
 			MethodName: "ConnectPeer",

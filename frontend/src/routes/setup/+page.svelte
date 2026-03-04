@@ -31,6 +31,20 @@
       />
     </label>
 
+    <label>
+      Peer address <span class="hint"
+        >The <code>host:port</code> other nodes use to reach this server's
+        federation port. Auto-detected — override if behind NAT, a proxy, or
+        VPN.</span
+      >
+      <input
+        type="text"
+        name="grpcAddress"
+        value={form?.grpcAddress ?? data.detectedGrpcAddress}
+        placeholder="192.168.1.10:50153"
+      />
+    </label>
+
     <hr />
 
     <label>
