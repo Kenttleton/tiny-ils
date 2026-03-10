@@ -1,5 +1,9 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import * as Card from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faBook, faNetworkWired, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 	let { data }: { data: PageData } = $props();
 </script>
@@ -8,103 +12,87 @@
 	<title>Admin — tiny-ils</title>
 </svelte:head>
 
-<h1>Dashboard</h1>
+<h1 class="mb-6 text-2xl font-bold">Dashboard</h1>
 
-<div class="stats">
-	<div class="stat">
-		<span class="num">{data.total}</span>
-		<span class="label">Curios in catalog</span>
-	</div>
-	<div class="stat">
-		<span class="num">{data.peers.length}</span>
-		<span class="label">Partner libraries</span>
-	</div>
+<div class="mb-8 flex flex-wrap gap-4">
+	<Card.Root class="min-w-[140px]">
+		<Card.Content class="flex flex-col gap-1 p-6">
+			<FontAwesomeIcon icon={faBook} class="h-5 w-5 text-muted-foreground" />
+			<span class="text-3xl font-bold">{data.total}</span>
+			<span class="text-xs text-muted-foreground">Curios in catalog</span>
+		</Card.Content>
+	</Card.Root>
+	<Card.Root class="min-w-[140px]">
+		<Card.Content class="flex flex-col gap-1 p-6">
+			<FontAwesomeIcon icon={faNetworkWired} class="h-5 w-5 text-muted-foreground" />
+			<span class="text-3xl font-bold">{data.peers.length}</span>
+			<span class="text-xs text-muted-foreground">Partner libraries</span>
+		</Card.Content>
+	</Card.Root>
 </div>
 
-<section>
-	<h2>Network <a href="/admin/peers" class="section-link">Manage →</a></h2>
+<section class="mb-8">
+	<h2 class="mb-3 flex items-baseline gap-3 text-base font-semibold">
+		Network
+		<a href="/admin/peers" class="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground hover:text-foreground hover:underline">Manage <FontAwesomeIcon icon={faArrowRight} class="h-3.5 w-3.5" /></a>
+	</h2>
 	{#if data.peers.length === 0}
-		<p class="empty">No peer nodes connected. <a href="/admin/peers">Register one</a>.</p>
+		<p class="text-muted-foreground text-sm">No peer nodes connected. <a href="/admin/peers" class="underline">Register one</a>.</p>
 	{:else}
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Address</th>
-					<th>Library ID</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.peers as peer}
-					<tr>
-						<td>{peer.displayName || '—'}</td>
-						<td class="mono">{peer.address}</td>
-						<td class="mono">{peer.nodeId}</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+		<div class="overflow-x-auto">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Name</Table.Head>
+						<Table.Head>Address</Table.Head>
+						<Table.Head>Library ID</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.peers as peer}
+						<Table.Row>
+							<Table.Cell>{peer.displayName || '—'}</Table.Cell>
+							<Table.Cell class="font-mono text-xs break-all">{peer.address}</Table.Cell>
+							<Table.Cell class="font-mono text-xs break-all">{peer.nodeId}</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 	{/if}
 </section>
 
-<section>
-	<h2>Recent curios</h2>
+<section class="mb-8">
+	<h2 class="mb-3 text-base font-semibold">Recent curios</h2>
 	{#if data.recentCurios.length === 0}
-		<p class="empty">No curios yet. <a href="/admin/curios/new">Add one</a>.</p>
+		<p class="text-muted-foreground text-sm">No curios yet. <a href="/admin/curios/new" class="underline">Add one</a>.</p>
 	{:else}
-		<table>
-			<thead>
-				<tr>
-					<th>Title</th>
-					<th>Type</th>
-					<th>Format</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.recentCurios as c (c.id)}
-					<tr>
-						<td>{c.title}</td>
-						<td>{c.mediaType}</td>
-						<td>{c.formatType}</td>
-						<td><a href="/admin/curios/{c.id}/edit">Edit</a></td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-		<p class="more"><a href="/admin/curios">View all curios →</a></p>
+		<div class="overflow-x-auto">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Title</Table.Head>
+						<Table.Head>Type</Table.Head>
+						<Table.Head>Format</Table.Head>
+						<Table.Head></Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.recentCurios as c (c.id)}
+						<Table.Row>
+							<Table.Cell>{c.title}</Table.Cell>
+							<Table.Cell>{c.mediaType}</Table.Cell>
+							<Table.Cell>{c.formatType}</Table.Cell>
+							<Table.Cell>
+								<a href="/admin/curios/{c.id}/edit" class="text-sm text-foreground hover:underline">Edit</a>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
+		<p class="mt-3 text-sm">
+			<a href="/admin/curios" class="text-foreground hover:underline">View all curios →</a>
+		</p>
 	{/if}
 </section>
-
-<style>
-	h1 { margin: 0 0 1.5rem; }
-	.stats { display: flex; gap: 1rem; margin-bottom: 2rem; }
-	.stat {
-		display: flex;
-		flex-direction: column;
-		padding: 1rem 1.5rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		min-width: 140px;
-	}
-	.num { font-size: 2rem; font-weight: 700; }
-	.label { font-size: 0.75rem; color: #6b7280; }
-	section { margin-bottom: 2rem; }
-	h2 {
-		font-size: 1rem;
-		margin: 0 0 0.75rem;
-		display: flex;
-		align-items: baseline;
-		gap: 0.75rem;
-	}
-	.section-link { font-size: 0.8rem; font-weight: 400; color: #6b7280; text-decoration: none; }
-	.section-link:hover { color: #111; text-decoration: underline; }
-	table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-	th { text-align: left; padding: 0.5rem; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-weight: 500; }
-	td { padding: 0.5rem; border-bottom: 1px solid #f3f4f6; }
-	td a { color: #374151; text-decoration: none; }
-	td a:hover { color: #111; text-decoration: underline; }
-	.mono { font-family: monospace; font-size: 0.8rem; word-break: break-all; }
-	.empty { color: #6b7280; font-size: 0.875rem; }
-	.more { margin-top: 0.75rem; font-size: 0.875rem; }
-</style>

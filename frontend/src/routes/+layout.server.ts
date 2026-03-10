@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { getUsersClient, call } from '$lib/server/grpc/clients';
 import type { LayoutServerLoad } from './$types';
 
-const PUBLIC_PATHS = ['/auth/login', '/auth/register', '/setup'];
+const PUBLIC_PATHS = ['/', '/auth/login', '/auth/register', '/setup'];
 const PUBLIC_PREFIXES = ['/browse'];
 
 // Cached once true — resets only on server restart (which is fine)

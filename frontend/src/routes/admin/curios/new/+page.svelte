@@ -1,5 +1,11 @@
 <script lang="ts">
 	import type { ActionData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Alert from '$lib/components/ui/alert';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faArrowLeft, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 	let { form }: { form: ActionData } = $props();
 
@@ -7,7 +13,7 @@
 	const FORMAT_TYPES = ['PHYSICAL', 'DIGITAL', 'BOTH'];
 
 	// Extract initial values from form so $state doesn't capture reactive props directly.
-	const initialMediaType = form?.values?.mediaType ?? 'BOOK';
+	const initialMediaType = form?.values?.media_type ?? 'BOOK';
 	const initialTitle = form?.enriched?.title ?? form?.values?.title ?? '';
 	const initialDescription = form?.enriched?.description ?? form?.values?.description ?? '';
 	const initialTags = form?.enriched?.tags?.join(', ') ?? form?.values?.tags?.join(', ') ?? '';
@@ -23,16 +29,16 @@
 	<title>New Curio — Admin — tiny-ils</title>
 </svelte:head>
 
-<a href="/admin/curios" class="back">← Back to curios</a>
-<h1>Add curio</h1>
+<a href="/admin/curios" class="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><FontAwesomeIcon icon={faArrowLeft} class="h-3.5 w-3.5" /> Back to curios</a>
+<h1 class="mb-6 text-2xl font-bold">Add curio</h1>
 
 <!-- Step 1: optional metadata enrichment -->
 {#if mediaType !== 'THING'}
-	<section class="enrich-section">
-		<h2>Enrich metadata (optional)</h2>
-		<form method="POST" action="?/enrich" class="enrich-form">
+	<section class="mb-6 rounded-md border border-border bg-muted/40 p-4">
+		<h2 class="mb-3 text-base font-semibold">Enrich metadata (optional)</h2>
+		<form method="POST" action="?/enrich" class="flex gap-2">
 			<input type="hidden" name="mediaType" value={mediaType} />
-			<input
+			<Input
 				type="text"
 				name="identifier"
 				bind:value={enrichIdentifier}
@@ -43,98 +49,81 @@
 						: mediaType === 'AUDIO'
 							? 'MusicBrainz ID or title'
 							: 'IGDB ID or title'}
+				class="flex-1"
 			/>
-			<button type="submit">Look up</button>
+			<Button type="submit" variant="outline"><FontAwesomeIcon icon={faMagnifyingGlass} class="mr-1.5 h-3.5 w-3.5" />Look up</Button>
 		</form>
 		{#if form?.error}
-			<p class="error">{form.error}</p>
+			<p class="mt-2 text-sm text-destructive">{form.error}</p>
 		{/if}
 		{#if form?.enriched}
-			<p class="enrich-ok">Metadata loaded — review and adjust below.</p>
+			<p class="mt-2 text-sm text-green-600">Metadata loaded — review and adjust below.</p>
 		{/if}
 	</section>
 {/if}
 
 <!-- Step 2: curio form -->
-<form method="POST" action="?/create" class="curio-form">
+<form method="POST" action="?/create" class="flex max-w-[600px] flex-col gap-4">
 	{#if form?.error && !form?.enriched}
-		<p class="error">{form.error}</p>
+		<Alert.Root variant="destructive">
+			<Alert.Description>{form.error}</Alert.Description>
+		</Alert.Root>
 	{/if}
 
-	<label>
-		Media type
-		<select name="mediaType" bind:value={mediaType}>
+	<div class="flex flex-col gap-1.5">
+		<Label for="mediaType">Media type</Label>
+		<select
+			id="mediaType"
+			name="mediaType"
+			bind:value={mediaType}
+			class="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+		>
 			{#each MEDIA_TYPES as mt}
 				<option value={mt}>{mt}</option>
 			{/each}
 		</select>
-	</label>
+	</div>
 
-	<label>
-		Format type
-		<select name="formatType">
+	<div class="flex flex-col gap-1.5">
+		<Label for="formatType">Format type</Label>
+		<select
+			id="formatType"
+			name="formatType"
+			class="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+		>
 			{#each FORMAT_TYPES as ft}
-				<option value={ft} selected={ft === (form?.values?.formatType ?? 'PHYSICAL')}>{ft}</option>
+				<option value={ft} selected={ft === (form?.values?.format_type ?? 'PHYSICAL')}>{ft}</option>
 			{/each}
 		</select>
-	</label>
+	</div>
 
-	<label>
-		Title *
-		<input type="text" name="title" bind:value={title} required />
-	</label>
+	<div class="flex flex-col gap-1.5">
+		<Label for="title">Title *</Label>
+		<Input id="title" type="text" name="title" bind:value={title} required />
+	</div>
 
-	<label>
-		Description
-		<textarea name="description" rows="4" bind:value={description}></textarea>
-	</label>
+	<div class="flex flex-col gap-1.5">
+		<Label for="description">Description</Label>
+		<textarea
+			id="description"
+			name="description"
+			rows="4"
+			bind:value={description}
+			class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+		></textarea>
+	</div>
 
-	<label>
-		Tags (comma-separated)
-		<input type="text" name="tags" bind:value={tags} placeholder="fiction, science, paperback" />
-	</label>
+	<div class="flex flex-col gap-1.5">
+		<Label for="tags">Tags (comma-separated)</Label>
+		<Input id="tags" type="text" name="tags" bind:value={tags} placeholder="fiction, science, paperback" />
+	</div>
 
-	<label>
-		Barcode
-		<input type="text" name="barcode" value={form?.values?.barcode ?? ''} />
-	</label>
+	<div class="flex flex-col gap-1.5">
+		<Label for="barcode">Barcode</Label>
+		<Input id="barcode" type="text" name="barcode" value={form?.values?.barcode ?? ''} />
+	</div>
 
-	<button type="submit" class="btn-primary">Create curio</button>
+	<div>
+		<Button type="submit"><FontAwesomeIcon icon={faPlus} class="mr-1.5 h-3.5 w-3.5" />Create curio</Button>
+	</div>
 </form>
-
-<style>
-	.back { display: inline-block; margin-bottom: 1rem; color: #6b7280; text-decoration: none; font-size: 0.875rem; }
-	h1 { margin: 0 0 1.5rem; }
-	h2 { font-size: 1rem; margin: 0 0 0.75rem; }
-	.enrich-section {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		padding: 1rem;
-		margin-bottom: 1.5rem;
-	}
-	.enrich-form { display: flex; gap: 0.5rem; }
-	.enrich-form input { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; }
-	.enrich-form button { padding: 0.4rem 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; font-size: 0.875rem; }
-	.enrich-ok { color: #16a34a; font-size: 0.875rem; margin: 0.5rem 0 0; }
-	.curio-form { display: flex; flex-direction: column; gap: 1rem; max-width: 600px; }
-	label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.875rem; font-weight: 500; }
-	input, select, textarea {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 1rem;
-		font-family: inherit;
-	}
-	.btn-primary {
-		padding: 0.6rem 1.25rem;
-		background: #111;
-		color: #fff;
-		border: none;
-		border-radius: 4px;
-		font-size: 1rem;
-		cursor: pointer;
-		align-self: flex-start;
-	}
-	.error { color: #dc2626; font-size: 0.875rem; margin: 0; }
-</style>

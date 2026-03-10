@@ -1,5 +1,14 @@
 <script lang="ts">
 	import type { ActionData, PageData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Card from '$lib/components/ui/card';
+	import { Separator } from '$lib/components/ui/separator';
+	import * as Alert from '$lib/components/ui/alert';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faArrowRightToBracket } from '@fortawesome/free-solid-svg-icons';
+	import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
@@ -8,112 +17,48 @@
 	<title>Sign in — tiny-ils</title>
 </svelte:head>
 
-<div class="auth-card">
-	<h1>Sign in</h1>
+<div class="mx-auto mt-16 w-full max-w-sm px-4">
+	<Card.Root>
+		<Card.Header>
+			<Card.Title class="text-2xl">Sign in</Card.Title>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-4">
+			{#if form?.error}
+				<Alert.Root variant="destructive">
+					<Alert.Description>{form.error}</Alert.Description>
+				</Alert.Root>
+			{/if}
 
-	{#if form?.error}
-		<p class="error">{form.error}</p>
-	{/if}
+			<form method="POST" class="flex flex-col gap-4">
+				<input type="hidden" name="next" value={data.next} />
 
-	<form method="POST">
-		<input type="hidden" name="next" value={data.next} />
+				<div class="flex flex-col gap-1.5">
+					<Label for="email">Email</Label>
+					<Input id="email" type="email" name="email" value={form?.email ?? ''} required autocomplete="email" />
+				</div>
 
-		<label>
-			Email
-			<input type="email" name="email" value={form?.email ?? ''} required autocomplete="email" />
-		</label>
+				<div class="flex flex-col gap-1.5">
+					<Label for="password">Password</Label>
+					<Input id="password" type="password" name="password" required autocomplete="current-password" />
+				</div>
 
-		<label>
-			Password
-			<input type="password" name="password" required autocomplete="current-password" />
-		</label>
+				<Button type="submit" class="w-full"><FontAwesomeIcon icon={faArrowRightToBracket} class="mr-1.5 h-3.5 w-3.5" />Sign in</Button>
+			</form>
 
-		<button type="submit">Sign in</button>
-	</form>
+			<p class="text-center text-sm text-muted-foreground">
+				Don't have an account? <a href="/auth/register" class="text-foreground underline-offset-4 hover:underline">Register</a>
+			</p>
 
-	<p class="alt">
-		Don't have an account? <a href="/auth/register">Register</a>
-	</p>
+			<Separator />
 
-	<hr />
+			<a
+				href="/auth/google"
+				class="flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+			><FontAwesomeIcon icon={faGoogle} class="mr-1.5 h-3.5 w-3.5" />Sign in with Google</a>
 
-	<a href="/auth/google" class="sso-btn">Sign in with Google</a>
-
-	<p class="cross-node">
-		Account at another library? <a href="/auth/cross-node">Partner library sign-in</a>
-	</p>
+			<p class="text-center text-xs text-muted-foreground">
+				Account at another library? <a href="/auth/cross-node" class="underline-offset-4 hover:underline">Partner library sign-in</a>
+			</p>
+		</Card.Content>
+	</Card.Root>
 </div>
-
-<style>
-	.auth-card {
-		max-width: 400px;
-		margin: 4rem auto;
-		padding: 2rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-	}
-	h1 {
-		margin: 0 0 1.5rem;
-		font-size: 1.5rem;
-	}
-	form {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-	label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		font-size: 0.875rem;
-		font-weight: 500;
-	}
-	input {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 1rem;
-	}
-	button {
-		padding: 0.6rem;
-		background: #111;
-		color: #fff;
-		border: none;
-		border-radius: 4px;
-		font-size: 1rem;
-		cursor: pointer;
-	}
-	.error {
-		color: #dc2626;
-		font-size: 0.875rem;
-		margin: 0 0 1rem;
-	}
-	.alt {
-		font-size: 0.875rem;
-		margin: 1rem 0 0;
-	}
-	hr {
-		margin: 1.5rem 0;
-		border: none;
-		border-top: 1px solid #e5e7eb;
-	}
-	.sso-btn {
-		display: block;
-		text-align: center;
-		padding: 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		text-decoration: none;
-		color: #374151;
-		font-size: 0.875rem;
-	}
-	.sso-btn:hover {
-		background: #f9fafb;
-	}
-	.cross-node {
-		font-size: 0.8125rem;
-		color: #6b7280;
-		margin: 0.75rem 0 0;
-		text-align: center;
-	}
-</style>

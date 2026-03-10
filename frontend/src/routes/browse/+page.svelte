@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -23,76 +27,41 @@
 	<title>Browse — tiny-ils</title>
 </svelte:head>
 
-<h1>Browse</h1>
+<h1 class="mb-6 text-2xl font-bold">Browse</h1>
 
-<form class="search-bar" onsubmit={(e) => { e.preventDefault(); search(); }}>
-	<input type="search" bind:value={q} placeholder="Search curios…" />
-	<select bind:value={mediaType} onchange={search}>
+<form class="mb-4 flex gap-2" onsubmit={(e) => { e.preventDefault(); search(); }}>
+	<Input type="search" bind:value={q} placeholder="Search curios…" class="flex-1" />
+	<select
+		bind:value={mediaType}
+		onchange={search}
+		class="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+	>
 		{#each MEDIA_TYPES as mt}
 			<option value={mt}>{mt || 'All types'}</option>
 		{/each}
 	</select>
-	<button type="submit">Search</button>
+	<Button type="submit"><FontAwesomeIcon icon={faMagnifyingGlass} class="mr-1.5 h-3.5 w-3.5" />Search</Button>
 </form>
 
-<p class="count">{data.total} item{data.total !== 1 ? 's' : ''}</p>
+<p class="mb-4 text-sm text-muted-foreground">{data.total} item{data.total !== 1 ? 's' : ''}</p>
 
 {#if data.curios.length === 0}
-	<p class="empty">No curios found.</p>
+	<p class="text-muted-foreground text-sm">No curios found.</p>
 {:else}
-	<ul class="curio-list">
+	<ul class="grid gap-3 p-0" style="list-style:none">
 		{#each data.curios as curio (curio.id)}
 			<li>
-				<a href="/browse/{curio.id}" class="curio-card">
-					<span class="title">{curio.title}</span>
-					<span class="meta">{curio.mediaType} · {curio.formatType}</span>
+				<a
+					href="/browse/{curio.id}"
+					class="flex flex-col gap-1 rounded-md border border-border p-4 text-inherit no-underline transition-colors hover:border-muted-foreground"
+				>
+					<span class="font-semibold">{curio.title}</span>
+					<span class="text-xs uppercase tracking-wide text-muted-foreground">{curio.mediaType} · {curio.formatType}</span>
 					{#if curio.tags?.length}
-						<span class="tags">{curio.tags.join(', ')}</span>
+						<span class="text-xs text-muted-foreground/70">{curio.tags.join(', ')}</span>
 					{/if}
 				</a>
 			</li>
 		{/each}
 	</ul>
 {/if}
-
-<style>
-	h1 { margin: 0 0 1.5rem; }
-	.search-bar {
-		display: flex;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
-	}
-	.search-bar input {
-		flex: 1;
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 1rem;
-	}
-	.search-bar select, .search-bar button {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		background: #fff;
-		cursor: pointer;
-	}
-	.count { color: #6b7280; font-size: 0.875rem; margin: 0 0 1rem; }
-	.empty { color: #6b7280; }
-	.curio-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
-	.curio-card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		text-decoration: none;
-		color: inherit;
-		transition: border-color 0.1s;
-	}
-	.curio-card:hover { border-color: #9ca3af; }
-	.title { font-weight: 600; }
-	.meta { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-	.tags { font-size: 0.75rem; color: #9ca3af; }
-</style>

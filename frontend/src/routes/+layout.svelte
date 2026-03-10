@@ -1,13 +1,21 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { isManager } from '$lib/auth';
+	import { Button } from '$lib/components/ui/button';
+	import * as Sheet from '$lib/components/ui/sheet';
+	import { Separator } from '$lib/components/ui/separator';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faBars } from '@fortawesome/free-solid-svg-icons';
+	import '../app.css';
 
 	let { data, children } = $props();
 
 	const user = $derived(data.user);
 	const nodeId = $derived(data.nodeId);
 	const manager = $derived(user ? isManager(user.claims, nodeId) : false);
-	const isAuthPage = $derived($page.url.pathname.startsWith('/auth/'));
+	const isAuthPage = $derived(page.url.pathname.startsWith('/auth/'));
+
+	let mobileMenuOpen = $state(false);
 </script>
 
 <svelte:head>
@@ -15,80 +23,85 @@
 </svelte:head>
 
 {#if !isAuthPage}
-	<nav>
-		<a href="/" class="brand">tiny-ils</a>
-		<div class="links">
-			<a href="/browse">Browse</a>
-			{#if user}
-				<a href="/profile">Profile</a>
-				{#if manager}
-					<a href="/admin">Admin</a>
+	<nav class="sticky top-0 z-50 border-b border-border bg-background">
+		<div class="mx-auto flex max-w-screen-xl items-center gap-4 px-4 py-3">
+			<!-- Brand -->
+			<a href="/" class="text-base font-bold text-foreground no-underline">tiny-ils</a>
+
+			<!-- Desktop links -->
+			<div class="hidden flex-1 items-center gap-4 md:flex">
+				<a href="/browse" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Browse</a>
+				{#if user}
+					<a href="/profile/loans" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Profile</a>
+					{#if manager}
+						<a href="/admin" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Admin</a>
+					{/if}
 				{/if}
-			{/if}
+			</div>
+
+			<!-- Desktop auth -->
+			<div class="ml-auto hidden items-center md:flex">
+				{#if user}
+					<form method="POST" action="/auth/logout">
+						<Button variant="outline" size="sm" type="submit">Sign out</Button>
+					</form>
+				{:else}
+					<Button variant="outline" size="sm" href="/auth/login">Sign in</Button>
+				{/if}
+			</div>
+
+			<!-- Mobile hamburger -->
+			<div class="ml-auto md:hidden">
+				<Sheet.Root bind:open={mobileMenuOpen}>
+					<Sheet.Trigger>
+						<Button variant="ghost" size="icon" aria-label="Open menu">
+							<FontAwesomeIcon icon={faBars} class="h-4 w-4" />
+						</Button>
+					</Sheet.Trigger>
+					<Sheet.Content side="right" class="w-64">
+						<Sheet.Header>
+							<Sheet.Title>tiny-ils</Sheet.Title>
+						</Sheet.Header>
+						<div class="mt-4 flex flex-col gap-1">
+							<a
+								href="/browse"
+								onclick={() => (mobileMenuOpen = false)}
+								class="rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+							>Browse</a>
+							{#if user}
+								<a
+									href="/profile/loans"
+									onclick={() => (mobileMenuOpen = false)}
+									class="rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+								>Profile</a>
+								{#if manager}
+									<a
+										href="/admin"
+										onclick={() => (mobileMenuOpen = false)}
+										class="rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+									>Admin</a>
+								{/if}
+							{/if}
+							<Separator class="my-2" />
+							{#if user}
+								<form method="POST" action="/auth/logout">
+									<Button variant="outline" class="w-full" type="submit" onclick={() => (mobileMenuOpen = false)}>
+										Sign out
+									</Button>
+								</form>
+							{:else}
+								<Button variant="outline" class="w-full" href="/auth/login" onclick={() => (mobileMenuOpen = false)}>
+									Sign in
+								</Button>
+							{/if}
+						</div>
+					</Sheet.Content>
+				</Sheet.Root>
+			</div>
 		</div>
-		{#if user}
-			<form method="POST" action="/auth/logout">
-				<button type="submit">Sign out</button>
-			</form>
-		{:else}
-			<a href="/auth/login" class="sign-in">Sign in</a>
-		{/if}
 	</nav>
 {/if}
 
-<main>
+<main class="mx-auto max-w-screen-xl px-4 py-8">
 	{@render children()}
 </main>
-
-<style>
-	nav {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-		padding: 0.75rem 1.5rem;
-		border-bottom: 1px solid #e5e7eb;
-		background: #fff;
-	}
-	.brand {
-		font-weight: 700;
-		font-size: 1.1rem;
-		text-decoration: none;
-		color: #111;
-	}
-	.links {
-		display: flex;
-		gap: 1rem;
-		flex: 1;
-	}
-	.links a {
-		color: #374151;
-		text-decoration: none;
-	}
-	.links a:hover {
-		color: #111;
-	}
-	.sign-in {
-		font-size: 0.875rem;
-		padding: 0.25rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		color: #374151;
-		text-decoration: none;
-	}
-	.sign-in:hover {
-		background: #f9fafb;
-	}
-	button {
-		background: none;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		padding: 0.25rem 0.75rem;
-		cursor: pointer;
-		color: #374151;
-	}
-	main {
-		padding: 2rem 1.5rem;
-		max-width: 1100px;
-		margin: 0 auto;
-	}
-</style>

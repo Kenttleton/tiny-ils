@@ -1,63 +1,70 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Alert from '$lib/components/ui/alert';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faArrowLeft, faBookOpen, faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const { curio, copies } = $derived(data);
-	const availableCopies = $derived(copies.filter((c) => c.available));
+	const availableCopies = $derived(copies.filter((c) => c.status === 'AVAILABLE'));
 </script>
 
 <svelte:head>
 	<title>{curio.title} — tiny-ils</title>
 </svelte:head>
 
-<a href="/browse" class="back">← Back to browse</a>
+<a href="/browse" class="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><FontAwesomeIcon icon={faArrowLeft} class="h-3.5 w-3.5" /> Back to browse</a>
 
-<div class="curio">
-	<div class="header">
-		<h1>{curio.title}</h1>
-		<span class="badge">{curio.mediaType}</span>
-		<span class="badge">{curio.formatType}</span>
+<div class="mb-8">
+	<div class="mb-3 flex flex-wrap items-center gap-3">
+		<h1 class="m-0 text-2xl font-bold">{curio.title}</h1>
+		<span class="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{curio.mediaType}</span>
+		<span class="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{curio.formatType}</span>
 	</div>
 
 	{#if curio.description}
-		<p class="desc">{curio.description}</p>
+		<p class="leading-relaxed text-foreground">{curio.description}</p>
 	{/if}
 
 	{#if curio.tags?.length}
-		<p class="tags">{curio.tags.join(' · ')}</p>
+		<p class="text-sm text-muted-foreground">{curio.tags.join(' · ')}</p>
 	{/if}
 </div>
 
 {#if form?.error}
-	<p class="error">{form.error}</p>
+	<Alert.Root variant="destructive" class="mb-4">
+		<Alert.Description>{form.error}</Alert.Description>
+	</Alert.Root>
 {/if}
 {#if form?.success}
-	<p class="success">
+	<p class="mb-4 text-sm text-green-600">
 		{form.action === 'checkout' ? 'Checked out successfully!' : 'Hold placed successfully!'}
 	</p>
 {/if}
 
-<section class="copies">
-	<h2>Physical copies ({copies.length})</h2>
+<section>
+	<h2 class="mb-3 text-base font-semibold">Physical copies ({copies.length})</h2>
 
 	{#if copies.length === 0}
-		<p class="empty">No physical copies registered.</p>
+		<p class="text-muted-foreground text-sm">No physical copies registered.</p>
 	{:else}
-		<ul>
+		<ul class="flex flex-col gap-2 p-0" style="list-style:none">
 			{#each copies as copy (copy.id)}
-				<li class="copy" class:unavailable={!copy.available}>
+				<li class="flex items-center justify-between rounded-md border border-border px-4 py-3 {copy.status === 'AVAILABLE' ? '' : 'bg-muted/40'}">
 					<div>
 						<strong>{copy.location || 'On shelf'}</strong>
-						<span class="cond">{copy.condition}</span>
+						<span class="ml-2 text-xs text-muted-foreground">{copy.condition}</span>
 					</div>
 					<div>
-						{#if copy.available}
+						{#if copy.status === 'AVAILABLE'}
 							<form method="POST" action="?/checkout">
 								<input type="hidden" name="copyId" value={copy.id} />
-								<button type="submit" class="btn-primary">Check out</button>
+								<Button type="submit" size="sm"><FontAwesomeIcon icon={faBookOpen} class="mr-1.5 h-3.5 w-3.5" />Check out</Button>
 							</form>
 						{:else}
-							<span class="unavail-label">Checked out</span>
+							<span class="text-sm text-muted-foreground">Checked out</span>
 						{/if}
 					</div>
 				</li>
@@ -65,64 +72,10 @@
 		</ul>
 
 		{#if availableCopies.length === 0}
-			<form method="POST" action="?/hold" class="hold-form">
-				<p>All copies are checked out.</p>
-				<button type="submit" class="btn-secondary">Place hold</button>
+			<form method="POST" action="?/hold" class="mt-4 flex items-center gap-4">
+				<p class="m-0 text-sm text-muted-foreground">All copies are checked out.</p>
+				<Button type="submit" variant="outline"><FontAwesomeIcon icon={faClockRotateLeft} class="mr-1.5 h-3.5 w-3.5" />Place hold</Button>
 			</form>
 		{/if}
 	{/if}
 </section>
-
-<style>
-	.back { display: inline-block; margin-bottom: 1.5rem; color: #6b7280; text-decoration: none; font-size: 0.875rem; }
-	.back:hover { color: #111; }
-	.curio { margin-bottom: 2rem; }
-	.header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-	h1 { margin: 0; font-size: 1.75rem; }
-	.badge {
-		font-size: 0.75rem;
-		padding: 0.2rem 0.5rem;
-		background: #f3f4f6;
-		border-radius: 9999px;
-		color: #374151;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-	.desc { color: #374151; line-height: 1.6; }
-	.tags { color: #6b7280; font-size: 0.875rem; }
-	.error { color: #dc2626; }
-	.success { color: #16a34a; }
-	h2 { font-size: 1.1rem; margin: 0 0 1rem; }
-	ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-	.copy {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0.75rem 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-	}
-	.copy.unavailable { background: #f9fafb; }
-	.cond { font-size: 0.75rem; color: #6b7280; margin-left: 0.5rem; }
-	.unavail-label { font-size: 0.875rem; color: #9ca3af; }
-	.btn-primary {
-		padding: 0.35rem 0.75rem;
-		background: #111;
-		color: #fff;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.875rem;
-	}
-	.btn-secondary {
-		padding: 0.35rem 0.75rem;
-		background: #fff;
-		color: #374151;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.875rem;
-	}
-	.hold-form { margin-top: 1rem; display: flex; align-items: center; gap: 1rem; }
-	.hold-form p { margin: 0; color: #6b7280; font-size: 0.875rem; }
-</style>

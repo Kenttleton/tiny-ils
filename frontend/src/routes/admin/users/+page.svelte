@@ -1,5 +1,12 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Alert from '$lib/components/ui/alert';
+	import * as Table from '$lib/components/ui/table';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faArrowUp, faArrowDown, faTrash, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -10,18 +17,20 @@
 	<title>Users — Admin — tiny-ils</title>
 </svelte:head>
 
-<div class="header-row">
-	<h1>Users</h1>
-	<button class="btn-primary" onclick={() => (showCreate = !showCreate)}>
-		{showCreate ? 'Cancel' : '+ Create user'}
-	</button>
+<div class="mb-6 flex items-center justify-between">
+	<h1 class="text-2xl font-bold">Users</h1>
+	<Button onclick={() => (showCreate = !showCreate)} variant={showCreate ? 'outline' : 'default'}>
+		{#if !showCreate}<FontAwesomeIcon icon={faUserPlus} class="mr-1.5 h-3.5 w-3.5" />{/if}{showCreate ? 'Cancel' : 'Create user'}
+	</Button>
 </div>
 
 {#if form?.error}
-	<p class="msg error">{form.error}</p>
+	<Alert.Root variant="destructive" class="mb-4">
+		<Alert.Description>{form.error}</Alert.Description>
+	</Alert.Root>
 {/if}
 {#if form?.success}
-	<p class="msg success">
+	<p class="mb-5 text-sm text-green-600">
 		{#if form.action === 'created'}User created successfully.{/if}
 		{#if form.action === 'promoted'}User promoted to Manager.{/if}
 		{#if form.action === 'demoted'}User demoted to User.{/if}
@@ -30,216 +39,110 @@
 {/if}
 
 {#if showCreate}
-	<section class="create-section">
-		<h2>Create user account</h2>
-		<form method="POST" action="?/create" class="create-form">
-			<div class="field">
-				<label for="email">Email <span class="required">*</span></label>
-				<input id="email" name="email" type="email" placeholder="user@example.com" required />
+	<section class="mb-6 max-w-[480px] rounded-md border border-border bg-muted/40 p-5">
+		<h2 class="mb-4 text-base font-semibold">Create user account</h2>
+		<form method="POST" action="?/create" class="flex flex-col gap-3">
+			<div class="flex flex-col gap-1.5">
+				<Label for="email">Email <span class="text-destructive">*</span></Label>
+				<Input id="email" name="email" type="email" placeholder="user@example.com" required />
 			</div>
-			<div class="field">
-				<label for="displayName">Display name</label>
-				<input id="displayName" name="displayName" type="text" placeholder="Optional" />
+			<div class="flex flex-col gap-1.5">
+				<Label for="displayName">Display name</Label>
+				<Input id="displayName" name="displayName" type="text" placeholder="Optional" />
 			</div>
-			<div class="field">
-				<label for="password">Password <span class="required">*</span></label>
-				<input id="password" name="password" type="password" minlength="8" required autocomplete="new-password" />
+			<div class="flex flex-col gap-1.5">
+				<Label for="password">Password <span class="text-destructive">*</span></Label>
+				<Input id="password" name="password" type="password" minlength={8} required autocomplete="new-password" />
 			</div>
-			<button type="submit" class="btn-primary">Create account</button>
+			<div>
+				<Button type="submit">Create account</Button>
+			</div>
 		</form>
 	</section>
 {/if}
 
-<section>
+<section class="mb-8">
 	{#if data.users.length === 0}
-		<p class="empty">No users found.</p>
+		<p class="text-muted-foreground text-sm">No users found.</p>
 	{:else}
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Email</th>
-					<th>Auth</th>
-					<th>Role</th>
-					<th>Created</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.users as user}
-					<tr>
-						<td>{user.display_name || '—'}</td>
-						<td>{user.email || '—'}</td>
-						<td class="auth-col">
-							{#if user.sso_provider}
-								<span class="badge sso">{user.sso_provider}</span>
-							{/if}
-							{#if user.has_password}
-								<span class="badge pw">password</span>
-							{/if}
-						</td>
-						<td>
-							<span class="role-badge {user.role === 'MANAGER' ? 'manager' : 'user'}">
-								{user.role || 'USER'}
-							</span>
-						</td>
-						<td class="date-col">
-							{new Date(user.created_at * 1000).toLocaleDateString()}
-						</td>
-						<td class="actions-col">
-							{#if user.role === 'MANAGER'}
-								<form method="POST" action="?/demote" class="inline">
+		<div class="overflow-x-auto">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Name</Table.Head>
+						<Table.Head>Email</Table.Head>
+						<Table.Head>Auth</Table.Head>
+						<Table.Head>Role</Table.Head>
+						<Table.Head>Created</Table.Head>
+						<Table.Head></Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.users as user}
+						<Table.Row>
+							<Table.Cell>{user.display_name || '—'}</Table.Cell>
+							<Table.Cell>{user.email || '—'}</Table.Cell>
+							<Table.Cell>
+								<div class="flex flex-wrap gap-1">
+									{#if user.sso_provider}
+										<span class="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium capitalize text-blue-800">{user.sso_provider}</span>
+									{/if}
+									{#if user.has_password}
+										<span class="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-700">password</span>
+									{/if}
+								</div>
+							</Table.Cell>
+							<Table.Cell>
+								<span class="rounded px-2 py-0.5 text-xs font-semibold {user.role === 'MANAGER' ? 'bg-amber-100 text-amber-800' : 'bg-zinc-100 text-zinc-600'}">
+									{user.role || 'USER'}
+								</span>
+							</Table.Cell>
+							<Table.Cell class="whitespace-nowrap text-xs text-muted-foreground">
+								{new Date(user.created_at * 1000).toLocaleDateString()}
+							</Table.Cell>
+							<Table.Cell class="whitespace-nowrap">
+								{#if user.role === 'MANAGER'}
+									<form method="POST" action="?/demote" class="inline">
+										<input type="hidden" name="userId" value={user.id} />
+										<button type="submit" class="mr-1 rounded border border-border px-2 py-0.5 text-xs text-foreground hover:bg-muted"><FontAwesomeIcon icon={faArrowDown} class="mr-1.5 h-3.5 w-3.5" />Demote</button>
+									</form>
+								{:else}
+									<form method="POST" action="?/promote" class="inline">
+										<input type="hidden" name="userId" value={user.id} />
+										<button type="submit" class="mr-1 rounded border border-border px-2 py-0.5 text-xs text-foreground hover:bg-muted"><FontAwesomeIcon icon={faArrowUp} class="mr-1.5 h-3.5 w-3.5" />Promote</button>
+									</form>
+								{/if}
+								<form method="POST" action="?/delete" class="inline">
 									<input type="hidden" name="userId" value={user.id} />
-									<button type="submit" class="btn-action">Demote</button>
+									<button
+										type="submit"
+										class="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50"
+										onclick={(e) => {
+											if (!confirm(`Delete ${user.email || user.display_name}? This cannot be undone.`)) {
+												e.preventDefault();
+											}
+										}}
+									>
+										<FontAwesomeIcon icon={faTrash} class="mr-1.5 h-3.5 w-3.5" />Delete
+									</button>
 								</form>
-							{:else}
-								<form method="POST" action="?/promote" class="inline">
-									<input type="hidden" name="userId" value={user.id} />
-									<button type="submit" class="btn-action">Promote</button>
-								</form>
-							{/if}
-							<form method="POST" action="?/delete" class="inline">
-								<input type="hidden" name="userId" value={user.id} />
-								<button
-									type="submit"
-									class="btn-danger"
-									onclick={(e) => {
-										if (!confirm(`Delete ${user.email || user.display_name}? This cannot be undone.`)) {
-											e.preventDefault();
-										}
-									}}
-								>
-									Delete
-								</button>
-							</form>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 
 		{#if data.total > data.limit}
-			<div class="pagination">
+			<div class="mt-4 flex items-center gap-4 text-sm">
 				{#if data.page > 1}
-					<a href="?page={data.page - 1}" class="page-link">← Previous</a>
+					<a href="?page={data.page - 1}" class="text-foreground hover:underline">← Previous</a>
 				{/if}
-				<span class="page-info"
-					>Page {data.page} of {Math.ceil(data.total / data.limit)}</span
-				>
+				<span class="text-muted-foreground">Page {data.page} of {Math.ceil(data.total / data.limit)}</span>
 				{#if data.page * data.limit < data.total}
-					<a href="?page={data.page + 1}" class="page-link">Next →</a>
+					<a href="?page={data.page + 1}" class="text-foreground hover:underline">Next →</a>
 				{/if}
 			</div>
 		{/if}
 	{/if}
 </section>
-
-<style>
-	.header-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 1.5rem;
-	}
-	h1 { margin: 0; }
-	h2 { font-size: 1rem; margin: 0 0 1rem; }
-	section { margin-bottom: 2rem; }
-	.create-section {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		padding: 1.25rem;
-		margin-bottom: 1.5rem;
-		max-width: 480px;
-	}
-	.create-form { display: flex; flex-direction: column; gap: 0.75rem; }
-	.field { display: flex; flex-direction: column; gap: 0.3rem; }
-	label { font-size: 0.875rem; font-weight: 500; }
-	.required { color: #dc2626; }
-	input[type='email'],
-	input[type='text'],
-	input[type='password'] {
-		padding: 0.45rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.875rem;
-	}
-	table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-	th {
-		text-align: left;
-		padding: 0.5rem 0.75rem;
-		border-bottom: 2px solid #e5e7eb;
-		color: #6b7280;
-		font-weight: 500;
-		white-space: nowrap;
-	}
-	td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-	.auth-col { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-	.date-col { color: #9ca3af; font-size: 0.8rem; white-space: nowrap; }
-	.actions-col { white-space: nowrap; }
-	.badge {
-		display: inline-block;
-		padding: 0.1rem 0.45rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 500;
-		text-transform: capitalize;
-	}
-	.badge.sso { background: #dbeafe; color: #1e40af; }
-	.badge.pw { background: #f3f4f6; color: #374151; }
-	.role-badge {
-		display: inline-block;
-		padding: 0.15rem 0.5rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 600;
-	}
-	.role-badge.manager { background: #fef3c7; color: #92400e; }
-	.role-badge.user { background: #f3f4f6; color: #6b7280; }
-	.inline { display: inline; }
-	.btn-primary {
-		padding: 0.45rem 1rem;
-		background: #111;
-		color: #fff;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		cursor: pointer;
-		align-self: flex-start;
-	}
-	.btn-action {
-		padding: 0.2rem 0.6rem;
-		background: #fff;
-		color: #374151;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		cursor: pointer;
-		margin-right: 0.25rem;
-	}
-	.btn-action:hover { background: #f9fafb; }
-	.btn-danger {
-		padding: 0.2rem 0.6rem;
-		background: #fff;
-		color: #dc2626;
-		border: 1px solid #fca5a5;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		cursor: pointer;
-	}
-	.btn-danger:hover { background: #fef2f2; }
-	.msg { font-size: 0.875rem; margin: 0 0 1.25rem; }
-	.error { color: #dc2626; }
-	.success { color: #16a34a; }
-	.empty { color: #6b7280; font-size: 0.875rem; }
-	.pagination {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding-top: 1rem;
-		font-size: 0.875rem;
-	}
-	.page-link { color: #111; text-decoration: none; }
-	.page-link:hover { text-decoration: underline; }
-	.page-info { color: #6b7280; }
-</style>

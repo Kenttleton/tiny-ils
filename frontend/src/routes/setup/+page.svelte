@@ -1,157 +1,88 @@
 <script lang="ts">
-  import type { ActionData, PageData } from "./$types";
+	import type { ActionData, PageData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Card from '$lib/components/ui/card';
+	import { Separator } from '$lib/components/ui/separator';
+	import * as Alert from '$lib/components/ui/alert';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faRocket } from '@fortawesome/free-solid-svg-icons';
 
-  let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head>
-  <title>Setup — tiny-ils</title>
+	<title>Setup — tiny-ils</title>
 </svelte:head>
 
-<div class="setup-card">
-  <h1>Welcome to tiny-ils</h1>
-  <p class="subtitle">Create your admin account to get started.</p>
+<div class="mx-auto mt-16 w-full max-w-lg px-4">
+	<Card.Root>
+		<Card.Header>
+			<Card.Title class="text-2xl">Welcome to tiny-ils</Card.Title>
+			<Card.Description>Create your admin account to get started.</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			{#if form?.error}
+				<Alert.Root variant="destructive" class="mb-4">
+					<Alert.Description>{form.error}</Alert.Description>
+				</Alert.Root>
+			{/if}
 
-  {#if form?.error}
-    <p class="error">{form.error}</p>
-  {/if}
+			<form method="POST" class="flex flex-col gap-4">
+				<div class="flex flex-col gap-1.5">
+					<Label for="publicUrl">Public URL</Label>
+					<Input
+						id="publicUrl"
+						type="url"
+						name="publicUrl"
+						value={form?.publicUrl ?? data.detectedPublicUrl}
+						required
+						placeholder="https://ils.example.com"
+					/>
+					<p class="text-xs text-muted-foreground">The URL users access this server from. Used for CORS and link generation.</p>
+				</div>
 
-  <form method="POST">
-    <label>
-      Public URL <span class="hint"
-        >The URL users access this server from. Used for CORS and link
-        generation.</span
-      >
-      <input
-        type="url"
-        name="publicUrl"
-        value={form?.publicUrl ?? data.detectedPublicUrl}
-        required
-        placeholder="https://ils.example.com"
-      />
-    </label>
+				<div class="flex flex-col gap-1.5">
+					<Label for="grpcAddress">Peer address</Label>
+					<Input
+						id="grpcAddress"
+						type="text"
+						name="grpcAddress"
+						value={form?.grpcAddress ?? data.detectedGrpcAddress}
+						placeholder="192.168.1.10:50153"
+						class="font-mono"
+					/>
+					<p class="text-xs text-muted-foreground">
+						The <code class="font-mono">host:port</code> other nodes use to reach this server's federation port.
+						Auto-detected — override if behind NAT, a proxy, or VPN.
+					</p>
+				</div>
 
-    <label>
-      Peer address <span class="hint"
-        >The <code>host:port</code> other nodes use to reach this server's
-        federation port. Auto-detected — override if behind NAT, a proxy, or
-        VPN.</span
-      >
-      <input
-        type="text"
-        name="grpcAddress"
-        value={form?.grpcAddress ?? data.detectedGrpcAddress}
-        placeholder="192.168.1.10:50153"
-      />
-    </label>
+				<Separator class="my-1" />
 
-    <hr />
+				<div class="flex flex-col gap-1.5">
+					<Label for="displayName">Display name <span class="text-muted-foreground font-normal">(optional)</span></Label>
+					<Input id="displayName" type="text" name="displayName" value={form?.displayName ?? ''} autocomplete="name" />
+				</div>
 
-    <label>
-      Display name (optional)
-      <input
-        type="text"
-        name="displayName"
-        value={form?.displayName ?? ""}
-        autocomplete="name"
-      />
-    </label>
+				<div class="flex flex-col gap-1.5">
+					<Label for="email">Email</Label>
+					<Input id="email" type="email" name="email" value={form?.email ?? ''} required autocomplete="email" />
+				</div>
 
-    <label>
-      Email
-      <input
-        type="email"
-        name="email"
-        value={form?.email ?? ""}
-        required
-        autocomplete="email"
-      />
-    </label>
+				<div class="flex flex-col gap-1.5">
+					<Label for="password">Password</Label>
+					<Input id="password" type="password" name="password" required autocomplete="new-password" minlength={8} />
+				</div>
 
-    <label>
-      Password
-      <input
-        type="password"
-        name="password"
-        required
-        autocomplete="new-password"
-        minlength="8"
-      />
-    </label>
+				<div class="flex flex-col gap-1.5">
+					<Label for="confirm">Confirm password</Label>
+					<Input id="confirm" type="password" name="confirm" required autocomplete="new-password" minlength={8} />
+				</div>
 
-    <label>
-      Confirm password
-      <input
-        type="password"
-        name="confirm"
-        required
-        autocomplete="new-password"
-        minlength="8"
-      />
-    </label>
-
-    <button type="submit">Complete setup</button>
-  </form>
+				<Button type="submit" class="w-full mt-2"><FontAwesomeIcon icon={faRocket} class="mr-1.5 h-3.5 w-3.5" />Complete setup</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 </div>
-
-<style>
-  .setup-card {
-    max-width: 480px;
-    margin: 4rem auto;
-    padding: 2rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-  }
-  h1 {
-    margin: 0 0 0.25rem;
-    font-size: 1.5rem;
-  }
-  .subtitle {
-    margin: 0 0 1.5rem;
-    color: #6b7280;
-    font-size: 0.9rem;
-  }
-  hr {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 0.25rem 0;
-  }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-  .hint {
-    font-weight: 400;
-    font-size: 0.8rem;
-    color: #6b7280;
-  }
-  input {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-  button {
-    padding: 0.6rem;
-    background: #111;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    margin-top: 0.5rem;
-  }
-  .error {
-    color: #dc2626;
-    font-size: 0.875rem;
-    margin: 0 0 1rem;
-  }
-</style>

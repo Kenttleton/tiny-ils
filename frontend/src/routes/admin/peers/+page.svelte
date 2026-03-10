@@ -1,5 +1,13 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Alert from '$lib/components/ui/alert';
+	import * as Table from '$lib/components/ui/table';
+	import { Separator } from '$lib/components/ui/separator';
+	import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+	import { faCopy, faLink } from '@fortawesome/free-solid-svg-icons';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -24,279 +32,174 @@
 
 	const capLabel: Record<string, string> = { curios: 'Catalog', users: 'Users', ui: 'UI' };
 	const capabilityLabel = (c: string) => capLabel[c] ?? c;
+
+	function capClass(cap: string): string {
+		const map: Record<string, string> = {
+			curios: 'bg-blue-50 text-blue-800',
+			users: 'bg-green-50 text-green-800',
+			ui: 'bg-purple-50 text-purple-800',
+		};
+		return map[cap] ?? 'bg-zinc-100 text-zinc-700';
+	}
 </script>
 
 <svelte:head>
 	<title>Network — Admin — tiny-ils</title>
 </svelte:head>
 
-<h1>Network</h1>
+<h1 class="mb-6 text-2xl font-bold">Network</h1>
 
 {#if form?.error}
-	<p class="msg error">{form.error}</p>
+	<Alert.Root variant="destructive" class="mb-4">
+		<Alert.Description>{form.error}</Alert.Description>
+	</Alert.Root>
 {/if}
 {#if form?.success}
-	<p class="msg success">Done.</p>
+	<p class="mb-5 text-sm text-green-600">Done.</p>
 {/if}
 
-<section>
-	<h2>This library</h2>
-	<div class="identity-card">
-		<div class="identity-row">
-			<div class="identity-field">
-				<span class="field-label">Library ID</span>
-				<code class="field-value">{data.nodeId || '—'}</code>
+<section class="mb-8">
+	<h2 class="mb-3 text-base font-semibold">This library</h2>
+	<div class="flex max-w-[640px] flex-col gap-3 rounded-md border border-border bg-muted/40 px-4 py-3">
+		<div class="flex items-start gap-3">
+			<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+				<span class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Library ID</span>
+				<code class="break-all font-mono text-[0.8125rem]">{data.nodeId || '—'}</code>
 			</div>
 			{#if data.nodeId}
-				<button class="btn-copy" onclick={() => copy(data.nodeId, 'id')}>
-					{copiedId ? 'Copied!' : 'Copy'}
-				</button>
+				<Button variant="outline" size="sm" class="mt-4 shrink-0" onclick={() => copy(data.nodeId, 'id')}>
+					<FontAwesomeIcon icon={faCopy} class="mr-1.5 h-3.5 w-3.5" />{copiedId ? 'Copied!' : 'Copy'}
+				</Button>
 			{/if}
 		</div>
-		<div class="identity-row">
-			<div class="identity-field">
-				<span class="field-label">Public key</span>
-				<code class="field-value key-value">{data.publicKey || '—'}</code>
+		<div class="flex items-start gap-3">
+			<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+				<span class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Public key</span>
+				<code class="break-all font-mono text-xs">{data.publicKey || '—'}</code>
 			</div>
 			{#if data.publicKey}
-				<button class="btn-copy" onclick={() => copy(data.publicKey, 'key')}>
-					{copiedKey ? 'Copied!' : 'Copy'}
-				</button>
+				<Button variant="outline" size="sm" class="mt-4 shrink-0" onclick={() => copy(data.publicKey, 'key')}>
+					<FontAwesomeIcon icon={faCopy} class="mr-1.5 h-3.5 w-3.5" />{copiedKey ? 'Copied!' : 'Copy'}
+				</Button>
 			{/if}
 		</div>
-		<div class="identity-row">
-			<div class="identity-field">
-				<span class="field-label">Peer address</span>
-				<code class="field-value">{data.grpcAddress || '—'}</code>
+		<div class="flex items-start gap-3">
+			<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+				<span class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Peer address</span>
+				<code class="break-all font-mono text-[0.8125rem]">{data.grpcAddress || '—'}</code>
 			</div>
 			{#if data.grpcAddress}
-				<button class="btn-copy" onclick={() => copy(data.grpcAddress, 'addr')}>
-					{copiedAddr ? 'Copied!' : 'Copy'}
-				</button>
+				<Button variant="outline" size="sm" class="mt-4 shrink-0" onclick={() => copy(data.grpcAddress, 'addr')}>
+					<FontAwesomeIcon icon={faCopy} class="mr-1.5 h-3.5 w-3.5" />{copiedAddr ? 'Copied!' : 'Copy'}
+				</Button>
 			{/if}
 		</div>
 		{#if data.capabilities.length > 0}
-			<div class="identity-row caps-row">
-				<div class="identity-field">
-					<span class="field-label">Capabilities</span>
-					<div class="cap-pills">
-						{#each data.capabilities as cap}
-							<span class="cap-pill cap-{cap}">{capabilityLabel(cap)}</span>
-						{/each}
-					</div>
+			<div class="flex flex-col gap-0.5">
+				<span class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Capabilities</span>
+				<div class="flex flex-wrap gap-1.5">
+					{#each data.capabilities as cap}
+						<span class="rounded-full px-2 py-0.5 text-[0.68rem] font-semibold {capClass(cap)}">{capabilityLabel(cap)}</span>
+					{/each}
 				</div>
 			</div>
 		{/if}
 	</div>
 </section>
 
-<section>
-	<h2>Partner libraries ({data.peers.length})</h2>
+<section class="mb-8">
+	<h2 class="mb-3 text-base font-semibold">Partner libraries ({data.peers.length})</h2>
 	{#if data.peers.length === 0}
-		<p class="empty">No partner libraries connected yet.</p>
+		<p class="text-muted-foreground text-sm">No partner libraries connected yet.</p>
 	{:else}
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Address</th>
-					<th>Library ID</th>
-					<th>Capabilities</th>
-					<th>Status</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.peers as peer}
-					<tr>
-						<td>{peer.displayName || '—'}</td>
-						<td class="mono">{peer.address}</td>
-						<td class="mono">{peer.nodeId}</td>
-						<td>
-							<div class="cap-pills">
-								{#each (peer.capabilities ?? []) as cap}
-									<span class="cap-pill cap-{cap}">{capabilityLabel(cap)}</span>
-								{:else}
-									<span class="cap-unknown">—</span>
-								{/each}
-							</div>
-						</td>
-						<td>
-							<span class="status-badge status-{(peer.status ?? 'pending').toLowerCase()}">
-								{peer.status ?? 'PENDING'}
-							</span>
-						</td>
-						<td>
-							{#if peer.status === 'PENDING'}
-								<form method="POST" action="?/approve" style="display:inline">
-									<input type="hidden" name="nodeId" value={peer.nodeId} />
-									<button type="submit" class="btn-approve">Approve</button>
-								</form>
-							{/if}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+		<div class="overflow-x-auto">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Name</Table.Head>
+						<Table.Head>Address</Table.Head>
+						<Table.Head>Library ID</Table.Head>
+						<Table.Head>Capabilities</Table.Head>
+						<Table.Head>Status</Table.Head>
+						<Table.Head></Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.peers as peer}
+						<Table.Row>
+							<Table.Cell>{peer.displayName || '—'}</Table.Cell>
+							<Table.Cell class="font-mono text-xs break-all">{peer.address}</Table.Cell>
+							<Table.Cell class="font-mono text-xs break-all">{peer.nodeId}</Table.Cell>
+							<Table.Cell>
+								<div class="flex flex-wrap gap-1">
+									{#each (peer.capabilities ?? []) as cap}
+										<span class="rounded-full px-2 py-0.5 text-[0.68rem] font-semibold {capClass(cap)}">{capabilityLabel(cap)}</span>
+									{:else}
+										<span class="text-xs text-muted-foreground">—</span>
+									{/each}
+								</div>
+							</Table.Cell>
+							<Table.Cell>
+								<span class="rounded-full px-2 py-0.5 text-xs font-semibold {(peer.status ?? 'PENDING') === 'CONNECTED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+									{peer.status ?? 'PENDING'}
+								</span>
+							</Table.Cell>
+							<Table.Cell>
+								{#if peer.status === 'PENDING'}
+									<form method="POST" action="?/approve" style="display:inline">
+										<input type="hidden" name="nodeId" value={peer.nodeId} />
+										<button type="submit" class="rounded border border-border px-2 py-0.5 text-xs text-foreground hover:bg-muted">Approve</button>
+									</form>
+								{/if}
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 	{/if}
 </section>
 
-<section class="connect-section">
-	<h2>Connect a partner library</h2>
-	<p class="desc">
+<Separator class="mb-6" />
+
+<section class="mb-8">
+	<h2 class="mb-2 text-base font-semibold">Connect a partner library</h2>
+	<p class="mb-4 text-xs text-muted-foreground">
 		Share your Library ID and public key with the other library's administrator, and ask them to do
 		the same. Enter their details below to establish the connection.
 	</p>
-	<form method="POST" action="?/connect" class="peer-form">
-		<label>
-			Display name
-			<input type="text" name="displayName" value={form?.values?.displayName ?? ''} />
-		</label>
-		<label>
-			Address (host:port) <span class="required">*</span>
-			<input
+	<form method="POST" action="?/connect" class="flex max-w-[480px] flex-col gap-3">
+		<div class="flex flex-col gap-1.5">
+			<Label for="displayName">Display name</Label>
+			<Input id="displayName" type="text" name="displayName" value={form?.values?.displayName ?? ''} />
+		</div>
+		<div class="flex flex-col gap-1.5">
+			<Label for="address">Address (host:port) <span class="text-destructive font-normal">*</span></Label>
+			<Input
+				id="address"
 				type="text"
 				name="address"
 				value={form?.values?.address ?? ''}
 				placeholder="192.168.1.10:50153"
 				required
 			/>
-		</label>
-		<label>
-			Library ID <span class="required">*</span>
-			<input type="text" name="nodeId" value={form?.values?.nodeId ?? ''} required />
-		</label>
-		<label>
-			Public key (base64) <span class="required">*</span>
-			<textarea name="publicKey" rows="3" required>{form?.values?.publicKey ?? ''}</textarea>
-		</label>
-		<button type="submit" class="btn-primary">Connect library</button>
+		</div>
+		<div class="flex flex-col gap-1.5">
+			<Label for="nodeId">Library ID <span class="text-destructive font-normal">*</span></Label>
+			<Input id="nodeId" type="text" name="nodeId" value={form?.values?.nodeId ?? ''} required />
+		</div>
+		<div class="flex flex-col gap-1.5">
+			<Label for="publicKey">Public key (base64) <span class="text-destructive font-normal">*</span></Label>
+			<textarea
+				id="publicKey"
+				name="publicKey"
+				rows="3"
+				required
+				class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+			>{form?.values?.publicKey ?? ''}</textarea>
+		</div>
+		<div>
+			<Button type="submit"><FontAwesomeIcon icon={faLink} class="mr-1.5 h-3.5 w-3.5" />Connect library</Button>
+		</div>
 	</form>
 </section>
-
-<style>
-	h1 { margin: 0 0 1.5rem; }
-	h2 { font-size: 1rem; margin: 0 0 0.75rem; }
-	section { margin-bottom: 2rem; }
-	.desc { font-size: 0.8125rem; color: #6b7280; margin: 0 0 1rem; }
-	.identity-card {
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 0.75rem 1rem;
-		background: #f9fafb;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		max-width: 640px;
-	}
-	.identity-row {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.75rem;
-	}
-	.identity-field {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-	}
-	.field-label {
-		font-size: 0.7rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: #6b7280;
-		font-weight: 600;
-	}
-	.field-value {
-		font-family: monospace;
-		font-size: 0.8125rem;
-		word-break: break-all;
-		color: #111;
-	}
-	.key-value { font-size: 0.75rem; }
-	.btn-copy {
-		flex-shrink: 0;
-		padding: 0.25rem 0.6rem;
-		background: #fff;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		cursor: pointer;
-		color: #374151;
-		margin-top: 1.1rem;
-		min-width: 60px;
-	}
-	.btn-copy:hover { background: #f3f4f6; }
-	table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-	th {
-		text-align: left;
-		padding: 0.5rem;
-		border-bottom: 2px solid #e5e7eb;
-		color: #6b7280;
-		font-weight: 500;
-	}
-	td { padding: 0.5rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-	.mono { font-family: monospace; font-size: 0.8rem; word-break: break-all; }
-	.status-badge {
-		display: inline-block;
-		font-size: 0.7rem;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		padding: 0.15rem 0.45rem;
-		border-radius: 9999px;
-	}
-	.status-connected { background: #dcfce7; color: #166534; }
-	.status-pending   { background: #fef9c3; color: #713f12; }
-	.btn-approve {
-		padding: 0.2rem 0.6rem;
-		background: #fff;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		cursor: pointer;
-		color: #374151;
-	}
-	.btn-approve:hover { background: #f3f4f6; }
-	.peer-form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 480px; }
-	label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.875rem; font-weight: 500; }
-	.required { color: #dc2626; font-weight: 400; }
-	input,
-	textarea {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		font-family: inherit;
-	}
-	.btn-primary {
-		padding: 0.5rem 1rem;
-		background: #111;
-		color: #fff;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		cursor: pointer;
-		align-self: flex-start;
-	}
-	.msg { font-size: 0.875rem; margin: 0 0 1.25rem; }
-	.error { color: #dc2626; }
-	.success { color: #16a34a; }
-	.empty { color: #6b7280; font-size: 0.875rem; }
-	.connect-section { padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
-	.caps-row { margin-top: 0.25rem; }
-	.cap-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-	.cap-pill {
-		font-size: 0.68rem;
-		font-weight: 600;
-		letter-spacing: 0.03em;
-		padding: 0.1rem 0.45rem;
-		border-radius: 9999px;
-		background: #f3f4f6;
-		color: #374151;
-	}
-	.cap-curios { background: #eff6ff; color: #1d4ed8; }
-	.cap-users  { background: #f0fdf4; color: #166534; }
-	.cap-ui     { background: #fdf4ff; color: #7e22ce; }
-	.cap-unknown { font-size: 0.75rem; color: #9ca3af; }
-</style>
